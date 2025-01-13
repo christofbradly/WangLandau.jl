@@ -17,6 +17,7 @@ WangLandau
 
 export init, solve!, solve  # from CommonSolve
 export WangLandauProblem
+public initialise
 
 include("WangLandauProblem.jl")
 
