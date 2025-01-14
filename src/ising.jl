@@ -48,6 +48,8 @@ function apply_random_move!(state::Ising2D)
 end
 
 # WangLandau.jl API
+initialise(state::Ising2D) = state
+
 function random_move(state::Ising2D)
     L = state.L
     return rand(CartesianIndices((L, L)))
@@ -65,4 +67,4 @@ function commit!(state::Ising2D, site, newE)
     return state
 end
 
-histogram_size(state::Ising2D) = (state.maxE + 1, )
+histogram_size(state::Ising2D) = (2state.maxE + 1, )

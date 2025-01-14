@@ -2,10 +2,11 @@
 """
     WangLandauProblem()
 """
-struct WangLandauProblem{}
-
+struct WangLandauProblem{S,M}
+    state::S
+    moveset::M
 end
-function WangLandauProblem(n; kwargs...)
+function WangLandauProblem(state, moveset; kwargs...)
 
     return WangLandauProblem()
 end
@@ -13,8 +14,14 @@ end
 """
     WangLandauSimulation()
 """
-struct WangLandauSimulation{S}
+mutable struct WangLandauSimulation{S}
     state::S
+    logf::Float64
+    final_logf::Float64
+    flat_checks::Int
+    flat_iterations::Int
+    total_steps::Int
+    max_total_steps::Int
 end
 function WangLandauSimulation(state; kwargs...)
     
