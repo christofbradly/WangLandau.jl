@@ -1,23 +1,26 @@
 """
     CatchupStrategy{B}
 
-Strategy for determining how to catchup the estimate of the density of
-states when a new state is visited for the first time.
+Strategy for determining how to catchup_value the estimate of the
+density of states when a new state is visited for the first time.
 
-API:
-`catchup(strat::CatchupStrategy; kwargs...)`: only called if `B == true`
+API: `catchup_value(strat::CatchupStrategy; kwargs...)`: only called if
+`B == true`
 """
 abstract type CatchupStrategy{B} end
+
+catchup_enabled(::CatchupStrategy{B}) where {B} = B
 
 """
     NoCatchup() <: CatchupStrategy{false}
 
 The default strategy, does nothing.
 """
-struct NoCatchup <: CatchupStrategy{false}
+struct NoCatchup{B} <: CatchupStrategy{B}
 end
-function catchup(::NoCatchup)
-    return zero(T)
+NoCatchup() = NoCatchup{false}()
+function catchup_value(::NoCatchup)
+    return 0.0
 end
 
 """
@@ -26,14 +29,14 @@ end
 When a new state is visited for the first time, the density of states is
 set to a fixed fraction of the smallest current non-zero value.
 """
-struct FixedFractionalCatchup{B} <: CatchupStrategy
+struct FixedFractionalCatchup{B} <: CatchupStrategy{B}
     fraction::Float64
 end
 function FixedFractionalCatchup(f)
     return FixedFractionalCatchup{true}(f)
 end
 
-function catchup(strat::FixedFractionalCatchup; dos_data)
+function catchup_value(strat::FixedFractionalCatchup; dos_data)
     return minimum(dos_data[dos_data .> 0]) * strat.fraction
 end
 
@@ -45,13 +48,13 @@ When a new state is visited for the first time, the density of states is
 set to a fraction of the smallest current non-zero value. The fraction
 is determined from the current value of `\\log f`.
 """
-struct DynamicFractionalCatchup{B} <: CatchupStrategy
+struct DynamicFractionalCatchup{B} <: CatchupStrategy{B}
     fraction::Float64
 end
 function DynamicFractionalCatchup()
     return DynamicFractionalCatchup{true}()
 end
 
-function catchup(strat::DynamicFractionalCatchup; dos_data, state)
+function catchup_value(strat::DynamicFractionalCatchup; dos_data, state)
     return minimum(dos_data[dos_data .> 0]) * (1 - logf)
 end
