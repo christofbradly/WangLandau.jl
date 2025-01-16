@@ -38,17 +38,10 @@ function Ising2D(L)
     return Ising2D(L, maxE, E0, spins)
 end
 
-function apply_random_move!(state::Ising2D)
-    L = state.L
-    site = rand(CartesianIndices((L, L)))
-    state.spins[site] *= -1
-    state.energy -= state.spins[site] * local_energy(state.spins, L, site)
-    1 ≤ state.energy ≤ 2state.maxE + 1 || throw(ErrorException("New energy is invalid."))
-    return state
-end
-
 # WangLandau.jl API
-initialise(state::Ising2D) = state
+initialise_state(state::Ising2D) = state
+
+histogram_size(state::Ising2D) = (2state.maxE + 1, )
 
 function random_move(state::Ising2D)
     L = state.L
@@ -67,4 +60,8 @@ function commit!(state::Ising2D, site, newE)
     return state
 end
 
-histogram_size(state::Ising2D) = (2state.maxE + 1, )
+# Run simulation
+L = 10
+prob = WangLandauProblem(Ising2D(L))
+
+sim = solve(prob; )
