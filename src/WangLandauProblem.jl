@@ -1,60 +1,47 @@
+# todo: Need possible different type for argument and output of initialise_state
 # CommonSolve.jl interface
 """
-    WangLandauProblem()
+    WangLandauProblem(state::StateType, moveset::MoveType)
+
+Required user definitions:
+- `initialise_state(state)::StateType`
+- `histogram_size(state)::NTuple{D,Int}`
+- `measure(state)::CartesianIndex`
+- `random_move(state)::MoveType`
+- `test_move(state, move)::CartesianIndex`
+- `commit!(state, move; kwargs...)::StateType`
 """
 struct WangLandauProblem{S,M}
     state::S
     moveset::M
 end
-function WangLandauProblem(state, moveset; kwargs...)
-
-    return WangLandauProblem()
+function WangLandauProblem(state, moveset)
+    return WangLandauProblem{typeof(state),typeof(moveset)}(state, moveset)
 end
 
 """
-    WangLandauSimulation()
+    CommonSolve.solve(::WangLandauProblem)::WangLandauSimulation
 """
-mutable struct WangLandauSimulation{S}
-    state::S
-    logf::Float64
-    final_logf::Float64
-    flat_checks::Int
-    flat_iterations::Int
-    total_steps::Int
-    max_total_steps::Int
-end
-function WangLandauSimulation(state; kwargs...)
-    
-    return WangLandauSimulation{typeof(state)}(state)
-end
+CommonSolve.solve
 
 """
-    CommonSolve.init(problem::WangLandauProblem) -> WangLandauSimulation
+    initialise_state(prob::WangLandauProblem)
 
-Initialise a [`WangLandauSimulation`](@ref) based on `problem`.
-"""
-function CommonSolve.init(prob::WangLandauProblem)
-    state = initialise(prob.state)
-    return WangLandauSimulation{S}(state)
-end
-
-"""
-    CommonSolve.solve!(sim::WangLandauSimulation; kwargs...)
-
-Run WangLandau algorithm on `sim`.
-"""
-function CommonSolve.solve!(sim::WangLandauSimulation)
-
-    return sim
-end
-
-"""
-    initialise(state)
-
-Initialise a `state` for use in a [`WangLandauSimulation`](@ref). By
-default this is the identity function, but is provided as part of the
-public API with the intention of defining a lightweight struct in
-[`WangLandauProblem`](@ref) and delaying any computationally intensive
+Initialise a new state for use in a [`WangLandauSimulation`](@ref). By
+default this returns the state used to construct the
+[`WangLandauProblem`](@ref), but is provided as part of the public API
+with the intention of defining a lightweight struct in
+`WangLandauProblem` and delaying any computationally intensive
 initialisation until `WangLandauSimulation`.
 """
-initialise(state) = state
+initialise_state(prob::WangLandauProblem) = prob.state
+
+histogram_size(state)
+
+measure(state) # -> CartesianIndex, or at least needs to index logdos
+
+random_move(state)::M
+
+test_move(state, move)
+
+commit!(state, move; kwargs...)
