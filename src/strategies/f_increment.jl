@@ -14,6 +14,13 @@ Return the current value of ``\\log f`` from the `strat`.
 current_value
 
 """
+    final_value(strat)
+
+Return the final value of ``\\log f`` from the `strat`.
+"""
+final_value
+
+"""
     update!(strat)    
 """
 update!
@@ -53,6 +60,7 @@ function ReduceByFactor(; initial = 1.0, factor = 0.5, final = 1e-6)
 end
 
 current_value(strat::ReduceByFactor) = strat.current
+final_value(strat::ReduceByFactor) = strat.final
 
 function update!(strat::ReduceByFactor)
     strat.current *= strat.factor

@@ -1,23 +1,22 @@
 # todo: Need possible different type for argument and output of initialise_state
 # CommonSolve.jl interface
 """
-    WangLandauProblem(state::StateType, moveset::MoveType)
+    WangLandauProblem(state::S)
 
-Required user definitions:
-- `initialise_state(state)::StateType`
-- `histogram_size(state)::NTuple{D,Int}`
-- `measure(state)::CartesianIndex`
-- `random_move(state)::MoveType`
-- `test_move(state, move)::CartesianIndex`
-- `commit!(state, move; kwargs...)::StateType`
+`WangLandau.jl` works by requiring user definitions of the following
+generic functions:
+- [`histogram_size`](@ref): get the dimensions of the histogram.
+- [`random_trial!`](@ref): Obtain a trial move and histogram indices for
+  old and new state.
+- [`commit_trial!`](@ref): Upon acceptance of the trial move, update the
+  state, optionally according to the indices.
+
+Optional user definitions:
+- [`initialise_state`](@ref): Optional initialisation step.
 """
-struct WangLandauProblem{S,M}
+struct WangLandauProblem{S}
     state::S
-    moveset::M
 end
-# function WangLandauProblem(state, moveset)
-#     return WangLandauProblem{typeof(state),typeof(moveset)}(state, moveset)
-# end
 
 """
     CommonSolve.solve(::WangLandauProblem)::WangLandauSimulation
@@ -25,38 +24,33 @@ end
 CommonSolve.solve
 
 """
-    initialise_state(prob::WangLandauProblem)
+    histogram_size(state::S)
+"""
+function histogram_size end
 
-Initialise a new state for use in a [`WangLandauSimulation`](@ref). By
+"""
+    random_trial!(state::S) -> trial::T, old_index::I, new_index::I
+
+See also [`commit_trial!`](@ref).
+"""
+function random_trial! end
+
+"""
+    commit_trial!(state::S, trial::T, old_index::I, new_index::I)
+
+See also [`random_trial!`](@ref).
+"""
+function commit_trial! end
+
+"""
+    initialise_state(state::S)
+
+Initialise a new `state` for use in a [`WangLandauSimulation`](@ref). By
 default this returns the state used to construct the
 [`WangLandauProblem`](@ref), but is provided as part of the public API
 with the intention of defining a lightweight struct in
 `WangLandauProblem` and delaying any computationally intensive
-initialisation until `WangLandauSimulation`.
+initialisation until `WangLandauSimulation`. Called from
+[`CommonSolve.init`](@ref).
 """
-initialise_state(prob::WangLandauProblem) = prob.state
-
-"""
-    histogram_size(state)
-"""
-histogram_size
-
-"""
-    measure(state)
-"""
-measure # -> CartesianIndex, or at least needs to index logdos
-
-"""
-    random_move(state)
-"""
-random_move
-
-"""
-    test_move(state)
-"""
-test_move
-
-"""
-    commit!(state, move)
-"""
-commit!
+initialise_state(state) = state
