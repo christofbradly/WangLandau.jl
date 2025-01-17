@@ -1,3 +1,6 @@
+"""
+    FlatHistogramStrategy
+"""
 abstract type FlatHistogramStrategy end
 
 """

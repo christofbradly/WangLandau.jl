@@ -1,3 +1,6 @@
+"""
+    DosIncrementStrategy
+"""
 abstract type DosIncrementStrategy end
 
 # API:

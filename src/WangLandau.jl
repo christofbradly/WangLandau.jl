@@ -19,8 +19,9 @@ WangLandau
 
 export init, solve!, solve, step!  # from CommonSolve
 export WangLandauProblem
-export NoCatchup, FixedFractionalCatchup
-export LogReduceByFactor
+export CatchupStrategy, NoCatchup, FixedFractionalCatchup
+export DosIncrementStrategy, LogReduceByFactor
+export FlatHistogramStrategy, FractionOfMean
 
 public initialise_state, random_move, test_move, commit!, histogram_size, measure
 
