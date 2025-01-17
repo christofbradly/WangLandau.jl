@@ -100,34 +100,34 @@ function CommonSolve.step!(
 
     (; state, flat_iterations, logdos, logf_strategy) = sim
 
-    oldE = measure(state)
+    old_index = measure(state)
     move = random_move(state)
-    newE = test_move(state, move)
+    new_index = test_move(state, move)
     
-    olddos = logdos[oldE]
-    newdos = logdos[newE]
+    old_dos = logdos[old_index]
+    new_dos = logdos[new_index]
 
-    if log(rand()) < olddos - newdos
-        commit!(state, move, newE)
+    if log(rand()) < old_dos - new_dos
+        commit!(state, move, new_index)
     else
-        newE = oldE
+        new_index = old_index
     end
-    temp_hist[newE] += 1
+    temp_hist[new_index] += 1
 
-    if C && iszero(logdos[newE]) && flat_iterations > 0
-        logdos[newE] = catchup_value(sim.catchup; logdos)
+    if C && iszero(logdos[new_index]) && flat_iterations > 0
+        logdos[new_index] = catchup_value(sim.catchup; logdos)
     else
-        logdos[newE] += current(logf_strategy)
+        logdos[new_index] += current(logf_strategy)
     end
 
-    if iszero(logdos[newE])
+    if iszero(logdos[new_index])
         if C && flat_iters > 0
-            logdos[newE] = catchup_value(catchup; logdos)
+            logdos[new_index] = catchup_value(catchup; logdos)
         else
-            logdos[newE] += current(logf_strategy)
+            logdos[new_index] += current(logf_strategy)
         end
     else
-        logdos[newE] += current(logf_strategy)
+        logdos[new_index] += current(logf_strategy)
     end
     return nothing
 end
@@ -157,6 +157,7 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
                 samples .+= temp_hist
                 temp_hist = zeros(Int, dims)
             end
+            update!(sim.flat_strategy, sim)
 
             sim.flat_checks += 1
             sim.total_steps += check_steps
