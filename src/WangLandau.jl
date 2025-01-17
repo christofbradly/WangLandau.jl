@@ -1,8 +1,8 @@
 module WangLandau
 
 using CommonSolve: CommonSolve, init, solve, solve!, step!
-using ProgressLogging: ProgressLogging, @logprogress, @withprogress
-using TerminalLoggers: TerminalLoggers
+using ProgressLogging: @logprogress, @withprogress
+using TerminalLoggers: TerminalLogger
 using StaticArrays: StaticArrays, SVector, MVector
 using Random: Random, seed!, shuffle!
 import TOML
@@ -17,20 +17,21 @@ Read the documentation [online]().
 """
 WangLandau
 
-export init, solve!, solve, step!  # from CommonSolve
-export WangLandauProblem
-public initialise_state, random_move, test_move, commit!, histogram_size
-export NoCatchup, FixedFractionalCatchup
-export LogReduceByFactor
-
-include("WangLandauProblem.jl")
-include("WangLandauSimulation.jl")
 include("strategies/catchup.jl")
 include("strategies/f_increment.jl")
 include("strategies/flatness.jl")
+include("WangLandauProblem.jl")
+include("WangLandauSimulation.jl")
+
+export init, solve!, solve, step!  # from CommonSolve
+export WangLandauProblem
+public initialise_state, random_move, test_move, commit!, histogram_size, measure
+export NoCatchup, FixedFractionalCatchup
+export LogReduceByFactor
 
 function __init__()
     # setup logging
+    Base.global_logger(TerminalLogger(right_justify=120))
 end
 
 end

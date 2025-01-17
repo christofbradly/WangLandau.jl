@@ -15,9 +15,9 @@ struct WangLandauProblem{S,M}
     state::S
     moveset::M
 end
-function WangLandauProblem(state, moveset)
-    return WangLandauProblem{typeof(state),typeof(moveset)}(state, moveset)
-end
+# function WangLandauProblem(state, moveset)
+#     return WangLandauProblem{typeof(state),typeof(moveset)}(state, moveset)
+# end
 
 """
     CommonSolve.solve(::WangLandauProblem)::WangLandauSimulation
@@ -36,12 +36,12 @@ initialisation until `WangLandauSimulation`.
 """
 initialise_state(prob::WangLandauProblem) = prob.state
 
-histogram_size(state)
+function histogram_size end
 
-measure(state) # -> CartesianIndex, or at least needs to index logdos
+function measure end # -> CartesianIndex, or at least needs to index logdos
 
-random_move(state)::M
+function random_move end
 
-test_move(state, move)
+function test_move end
 
-commit!(state, move; kwargs...)
+function commit! end

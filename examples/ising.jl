@@ -1,3 +1,5 @@
+using WangLandau
+
 # simple 2D Ising model - free boundary conditions, no field
 
 function ising_full_energy(grid)
@@ -39,21 +41,21 @@ function Ising2D(L)
 end
 
 # WangLandau.jl API
-initialise_state(state::Ising2D) = state
+WangLandau.initialise_state(state::Ising2D) = state
 
-histogram_size(state::Ising2D) = (2state.maxE + 1, )
+WangLandau.histogram_size(state::Ising2D) = (2state.maxE + 1, )
 
-function random_move(state::Ising2D)
+function WangLandau.random_move(state::Ising2D)
     L = state.L
     return rand(CartesianIndices((L, L)))
 end
 
-function test_move(state::Ising2D, site)
+function WangLandau.test_move(state::Ising2D, site)
     ΔE = state.spins[site] * local_energy(state.spins, state.L, site)
     return state.energy + ΔE
 end
 
-function commit!(state::Ising2D, site, newE)
+function WangLandau.commit!(state::Ising2D, site, newE)
     state.spins[site] *= -1
     state.energy = newE
     1 ≤ state.energy ≤ 2state.maxE + 1 || throw(ErrorException("New energy is invalid."))
@@ -64,4 +66,4 @@ end
 L = 10
 prob = WangLandauProblem(Ising2D(L))
 
-sim = solve(prob; )
+sim = solve(prob)
