@@ -17,17 +17,18 @@ Read the documentation [online]().
 """
 WangLandau
 
+export init, solve!, solve, step!  # from CommonSolve
+export WangLandauProblem
+export NoCatchup, FixedFractionalCatchup
+export LogReduceByFactor
+
+public initialise_state, random_move, test_move, commit!, histogram_size, measure
+
 include("strategies/catchup.jl")
 include("strategies/f_increment.jl")
 include("strategies/flatness.jl")
 include("WangLandauProblem.jl")
 include("WangLandauSimulation.jl")
-
-export init, solve!, solve, step!  # from CommonSolve
-export WangLandauProblem
-public initialise_state, random_move, test_move, commit!, histogram_size, measure
-export NoCatchup, FixedFractionalCatchup
-export LogReduceByFactor
 
 function __init__()
     # setup logging

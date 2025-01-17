@@ -36,12 +36,27 @@ initialisation until `WangLandauSimulation`.
 """
 initialise_state(prob::WangLandauProblem) = prob.state
 
-function histogram_size end
+"""
+    histogram_size(state)
+"""
+histogram_size
 
-function measure end # -> CartesianIndex, or at least needs to index logdos
+"""
+    measure(state)
+"""
+measure # -> CartesianIndex, or at least needs to index logdos
 
-function random_move end
+"""
+    random_move(state)
+"""
+random_move
 
-function test_move end
+"""
+    test_move(state)
+"""
+test_move
 
-function commit! end
+"""
+    commit!(state, move)
+"""
+commit!
