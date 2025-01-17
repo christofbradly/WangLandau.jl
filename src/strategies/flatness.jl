@@ -14,10 +14,10 @@ isflat
 """
     update!(strat, sim)
 
-Optionally update `strat` with information from the simulation `sim`. By
-default returns `strat`.
+Optionally update `strat` with information from the simulation `sim`.
+Returns `nothing`.
 """
-update!(s::FlatHistogramStrategy, _) = s
+update!(::FlatHistogramStrategy, _) = nothing
 
 """
     FractionOfMean(tol)

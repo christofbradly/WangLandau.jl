@@ -6,7 +6,7 @@ Keyword arguments:
 - `max_total_steps`:
 - `final_logf = 1e-6`: when ``\\log f`` reaches this value the
   simulation ends.
-- `logf_strategy = LogReduceByFactor(; final = final_logf)`: Controls
+- `logf_strategy = ReduceByFactor(; final = final_logf)`: Controls
   how ``f`` is updated. Overrides `final_logf`.
 - `tol = 0.8`: Set tolerance for the flatness of the histogram.
 - `flat_strategy = FractionOfMean(tol)`: Define the flatness criterion
@@ -44,7 +44,7 @@ function WangLandauSimulation(state::S,moveset::M;
     C = catchup_enabled(catchup)
 
     if isnothing(logf_strategy)
-        logf_strategy = LogReduceByFactor(final_logf)
+        logf_strategy = ReduceByFactor(; final = final_logf)
     end
     if isnothing(flat_strategy)
         flat_strategy = FractionOfMean(tol)
@@ -117,18 +117,9 @@ function CommonSolve.step!(
     if C && iszero(logdos[new_index]) && flat_iterations > 0
         logdos[new_index] = catchup_value(sim.catchup; logdos)
     else
-        logdos[new_index] += current(logf_strategy)
+        logdos[new_index] += current_value(logf_strategy)
     end
 
-    if iszero(logdos[new_index])
-        if C && flat_iters > 0
-            logdos[new_index] = catchup_value(catchup; logdos)
-        else
-            logdos[new_index] += current(logf_strategy)
-        end
-    else
-        logdos[new_index] += current(logf_strategy)
-    end
     return nothing
 end
 
