@@ -19,7 +19,7 @@ WangLandau
 
 export init, solve!, solve, step!  # from CommonSolve
 export WangLandauProblem
-export CatchupStrategy, NoCatchup, FixedFractionalCatchup
+export CatchupStrategy, NoCatchup, FixedFractionalCatchup#, DynamicFractionalCatchup
 export DosIncrementStrategy, LogReduceByFactor
 export FlatHistogramStrategy, FractionOfMean, StableNumVisits
 

@@ -4,12 +4,22 @@
 Strategy for determining how to catchup_value the estimate of the
 density of states when a new state is visited for the first time.
 
-API: `catchup_value(strat::CatchupStrategy; kwargs...)`: only called if
+API: 
+
+- `catchup_value(strat::CatchupStrategy; kwargs...)`: only called if
 `B == true`
 """
 abstract type CatchupStrategy{B} end
 
+"""
+    catchup_enabled(strat)
+"""
 catchup_enabled(::CatchupStrategy{B}) where {B} = B
+
+"""
+    catchup_value(strat)
+"""
+catchup_value
 
 """
     NoCatchup() <: CatchupStrategy{false}
@@ -36,8 +46,9 @@ function FixedFractionalCatchup(f)
     return FixedFractionalCatchup{true}(f)
 end
 
-function catchup_value(strat::FixedFractionalCatchup; dos_data)
-    return minimum(dos_data[dos_data .> 0]) * strat.fraction
+function catchup_value(strat::FixedFractionalCatchup; sim)
+    dos = sim.logdos
+    return minimum(dos[dos .> 0]) * strat.fraction
 end
 
 # todo: How to implement this?
@@ -49,12 +60,11 @@ set to a fraction of the smallest current non-zero value. The fraction
 is determined from the current value of `\\log f`.
 """
 struct DynamicFractionalCatchup{B} <: CatchupStrategy{B}
-    fraction::Float64
-end
-function DynamicFractionalCatchup()
-    return DynamicFractionalCatchup{true}()
+    DynamicFractionalCatchup() = new{true}()
 end
 
-function catchup_value(strat::DynamicFractionalCatchup; dos_data, state)
-    return minimum(dos_data[dos_data .> 0]) * (1 - logf)
+function catchup_value(::DynamicFractionalCatchup; sim)
+    dos = sim.logdos
+    logf = current_value(sim.logf_strategy)
+    return minimum(dos[dos .> 0]) * (1 - logf)
 end
