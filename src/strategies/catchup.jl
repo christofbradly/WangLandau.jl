@@ -1,12 +1,14 @@
 """
     CatchupStrategy{B}
 
-Strategy for determining how to catchup_value the estimate of the
-density of states when a new state is visited for the first time.
+Strategy for determining how to update the density of states when a new
+state is visited for the first time.
+
+This occurs *before* the density of states is updated with parameter `f`.
 
 API: 
-
-- `catchup_value(strat::CatchupStrategy; kwargs...)`: only called if
+- [`catchup_enabled(strat::CatchupStrategy)`](@ref)
+- [`catchup_value(strat::CatchupStrategy, sim)`](@ref): only called if
 `B == true`
 """
 abstract type CatchupStrategy{B} end
@@ -17,7 +19,7 @@ abstract type CatchupStrategy{B} end
 catchup_enabled(::CatchupStrategy{B}) where {B} = B
 
 """
-    catchup_value(strat)
+    catchup_value(strat, sim)
 """
 catchup_value
 
