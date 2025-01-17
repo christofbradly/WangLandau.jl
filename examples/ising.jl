@@ -28,8 +28,8 @@ function local_energy(grid, L, site)
 end
 
 mutable struct Ising2D
-    L::Int
-    maxE::Int
+    const L::Int
+    const maxE::Int
     energy::Int
     spins::Matrix{Int}
 end
@@ -41,21 +41,18 @@ function Ising2D(L)
 end
 
 # WangLandau.jl API
-WangLandau.initialise_state(state::Ising2D) = state
-
 WangLandau.histogram_size(state::Ising2D) = (2state.maxE + 1, )
 
-function WangLandau.random_move(state::Ising2D)
+function WangLandau.random_trial!(state::Ising2D)
     L = state.L
-    return rand(CartesianIndices((L, L)))
-end
-
-function WangLandau.test_move(state::Ising2D, site)
+    site = rand(CartesianIndices((L, L)))
+    oldE = state.energy
     ΔE = state.spins[site] * local_energy(state.spins, state.L, site)
-    return state.energy + ΔE
+    newE = oldE + ΔE
+    return site, oldE, newE
 end
 
-function WangLandau.commit!(state::Ising2D, site, newE)
+function WangLandau.commit_trial!(state::Ising2D, site, _, newE)
     state.spins[site] *= -1
     state.energy = newE
     1 ≤ state.energy ≤ 2state.maxE + 1 || throw(ErrorException("New energy is invalid."))
@@ -63,7 +60,7 @@ function WangLandau.commit!(state::Ising2D, site, newE)
 end
 
 # Run simulation
-L = 10
+L = 4
 prob = WangLandauProblem(Ising2D(L))
 
 sim = solve(prob)
