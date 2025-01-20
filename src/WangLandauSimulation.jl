@@ -133,6 +133,7 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     total_iterations = expected_iterations(sim.logf_strategy)
 
     starting_time = time() + sim.elapsed_time
+    @info "Starting simulation..."
     @withprogress name = "WangLandau" begin
         while !isconverged(sim.logf_strategy)
             for _ in 1:sim.check_steps
@@ -149,11 +150,12 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
 
             sim.flat_checks += 1
             sim.total_steps += sim.check_steps
-
+            
             @logprogress sim.flat_iterations / total_iterations
         end
     end
 
     sim.elapsed_time = time() - starting_time
+    @info "... done!"
     return sim
 end

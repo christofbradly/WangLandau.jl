@@ -3,6 +3,7 @@ module WangLandau
 using CommonSolve: CommonSolve, init, solve, solve!, step!
 using ProgressLogging: @logprogress, @withprogress
 using TerminalLoggers: TerminalLogger
+using Logging: ConsoleLogger, global_logger
 using StaticArrays: StaticArrays, SVector, MVector
 using Random: Random, seed!, shuffle!
 import TOML
@@ -33,7 +34,12 @@ include("WangLandauSimulation.jl")
 
 function __init__()
     # setup logging
-    Base.global_logger(TerminalLogger(right_justify=120))
+    if isa(stderr, Base.TTY) && (get(ENV, "CI", nothing) ≠ true) # running in terminal?
+        global_logger(TerminalLogger()) # enable progress bar
+    else
+        global_logger(ConsoleLogger())
+    end
+    Base.global_logger()
 end
 
 end
