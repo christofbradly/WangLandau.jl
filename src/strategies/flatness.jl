@@ -23,23 +23,28 @@ update!(::FlatHistogramStrategy, _) = nothing
     FractionOfMean(tol)
 
 Define the histogram flatness criterion to be when the smallest non-zero
-value is greater than `tol` times the mean (of non-zero values).
+value is greater than `tol` times the mean, which is calculated from
+states that have at least `min` visits.
 """
-struct FractionOfMean <: FlatHistogramStrategy
+@kwdef struct FractionOfMean <: FlatHistogramStrategy
     tol::Float64
-    function FractionOfMean(tol)
+    min::Int = 0
+    function FractionOfMean(tol, min)
         0 < tol < 1 || throw(ArgumentError("Tolerance must be less than 1."))
-        return new(tol)
-    end    
+        min ≥ 0 || throw(ArgumentError("Min must be non-negative."))
+        return new(tol, min)
+    end
 end
+FractionOfMean(tol; kwargs...) = FractionOfMean(; tol, kwargs...)
 
 function isflat(strat::FractionOfMean, hist)
-    numnonzeros = length(hist[hist .> 0])
+    min = strat.min
+    numnonzeros = length(hist[hist .> min])
     # avoid false positive during initial warmup
     numnonzeros == 0 && throw(ErrorException("No samples in local histogram."))
     numnonzeros == 1 && return false
-    mean = sum(hist[hist .> 0]) / numnonzeros
-    gap = minimum(hist[hist .> 0]) / mean
+    mean = sum(hist[hist .> min]) / numnonzeros
+    gap = minimum(hist[hist .> min]) / mean
     return gap > strat.tol
 end
 
