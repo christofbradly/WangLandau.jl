@@ -106,7 +106,8 @@ function CommonSolve.step!(
     old_dos = logdos[old_index]
     new_dos = logdos[new_index]
 
-    if log(rand()) < old_dos - new_dos
+    # faster than log(rand())
+    if rand() < exp(old_dos - new_dos)
         commit_trial!(state, trial, old_index, new_index)
     else
         new_index = old_index
