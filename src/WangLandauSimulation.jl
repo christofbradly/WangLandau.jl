@@ -150,6 +150,11 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
 
             sim.flat_checks += 1
             sim.total_steps += sim.check_steps
+
+            if sim.total_steps > sim.max_total_steps 
+                @warn "Global maximum number of steps reached, ending simulation."
+                break
+            end
             
             @logprogress sim.flat_iterations / total_iterations
         end
