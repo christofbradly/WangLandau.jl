@@ -3,7 +3,7 @@
 
 Keyword arguments:
 - `check_steps = 1000`:
-- `max_total_steps`:
+- `max_total_steps = Inf`:
 - `final_logf = 1e-6`: when ``\\log f`` reaches this value the
   simulation ends.
 - `logf_strategy = ReduceByFactor(; final = final_logf)`: Controls
@@ -22,13 +22,13 @@ mutable struct WangLandauSimulation{S,C,D}
     flat_checks::Int
     flat_iterations::Int
     total_steps::Int
-    max_total_steps::Int
+    max_total_steps::Float64
     catchup::CatchupStrategy{C}
     elapsed_time::Float64
 end
 function WangLandauSimulation(state::S;
     check_steps = 1000,
-    max_total_steps = 1e6,
+    max_total_steps = Inf,
     final_logf = 1e-6,
     logf_strategy = nothing,
     flat_tolerance = 0.9,
@@ -49,7 +49,7 @@ function WangLandauSimulation(state::S;
         flat_strategy = FractionOfMean(flat_tolerance)
     end
     if max_total_steps < expected_iterations(logf_strategy) * check_steps
-        @warn "max_total_steps is less than expected number; overwriting to expected number of steps."
+        @warn "`max_total_steps` is less than expected number; overwriting to expected number of steps."
         max_total_steps = expected_iterations(logf_strategy) * check_steps
     end
 
