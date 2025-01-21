@@ -33,11 +33,20 @@ mutable struct Ising2D
     energy::Int
     spins::Matrix{Int}
 end
-function Ising2D(L)
+function Ising2D(L; initial_state = nothing)
     maxE = 2 * (L - 1)^2 + 2 * (L - 1)  # equiv to: ising_full_energy(ones(Int,L,L))
-    spins = rand((-1, 1), (L, L))
-    E0 = ising_full_energy(spins) + maxE + 1
-    return Ising2D(L, maxE, E0, spins)
+    if isnothing(initial_state)
+        initial_state = rand((-1, 1), (L, L))
+    else
+        is_err = ArgumentError("Invalid initial state.")
+        initial_state isa Matrix{Int} || throw(is_err)
+        size(initial_state) == (L, L) || throw(is_err)
+        minimum(initial_state) in (-1,1) || throw(is_err)
+        maximum(initial_state) in (-1,1) || throw(is_err)
+        0 in initial_state && throw(is_err)
+    end
+    E0 = ising_full_energy(initial_state) + maxE + 1
+    return Ising2D(L, maxE, E0, initial_state)
 end
 
 # WangLandau.jl API
