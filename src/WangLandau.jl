@@ -33,8 +33,13 @@ include("WangLandauProblem.jl")
 include("WangLandauSimulation.jl")
 
 function __init__()
-    # setup logging
-    if isa(stderr, Base.TTY) && (get(ENV, "CI", nothing) ≠ true) # running in terminal?
+    # setup logging - from Rimu.jl
+    if isdefined(Main, :IJulia) && Main.IJulia.inited # are we running in Jupyter?
+        # need for now as TerminalLoggers currently does not play nice with Jupyter
+        # install a bridge to use ProgressMeter under the hood
+        # may become unneccessary in the future
+        ConsoleProgressMonitor.install_logger(; kwargs...) # use ProgressMeter for Jupyter    
+    elseif isa(stderr, Base.TTY) && (get(ENV, "CI", nothing) ≠ true) # running in terminal?
         global_logger(TerminalLogger()) # enable progress bar
     else
         global_logger(ConsoleLogger())
