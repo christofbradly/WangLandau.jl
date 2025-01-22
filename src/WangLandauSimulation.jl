@@ -91,7 +91,7 @@ end
 Initialise a [`WangLandauSimulation`](@ref) based on `problem`.
 """
 function CommonSolve.init(prob::WangLandauProblem; kwargs...)
-    state = initialise_state(prob.state)
+    state = initialise_state(prob.statedef)
     return WangLandauSimulation(state; kwargs...)
 end
 
