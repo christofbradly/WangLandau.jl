@@ -2,32 +2,34 @@
     WangLandauSimulation()
 
 Keyword arguments:
-- `check_steps = 1000`:
+- `check_sweeps = 100`: The number of sweeps to perform before checking
+  for flatness. A sweep is `N` steps where `N` is the size of the
+  system. See [`system_size`](@ref).
 - `max_total_steps = Inf`:
 - `final_logf = 1e-6`: when ``\\log f`` reaches this value the
   simulation ends.
-- `logf_strategy = ReduceByFactor(; final = final_logf)`: Controls
-  how ``f`` is updated. Overrides `final_logf`.
+- `logf_strategy = ReduceByFactor(; final = final_logf)`: Controls how
+  ``f`` is updated. Overrides `final_logf`.
 - `tol = 0.8`: Set tolerance for the flatness of the histogram.
 - `flat_strategy = FractionOfMean(tol)`: Define the flatness criterion
   for the histogram. Overrides `tol`.
 """
 mutable struct WangLandauSimulation{S,C,D}
     state::S
-    samples::Array{Int,D}
-    logdos::Array{Float64,D}
     logf_strategy::DosIncrementStrategy
     flat_strategy::FlatHistogramStrategy
-    check_steps::Int
+    catchup::CatchupStrategy{C}
+    const check_steps::Int
     flat_checks::Int
     flat_iterations::Int
     total_steps::Int
-    max_total_steps::Float64
-    catchup::CatchupStrategy{C}
+    const max_total_steps::Float64    
     elapsed_time::Float64
+    samples::Array{Int,D}
+    logdos::Array{Float64,D}
 end
 function WangLandauSimulation(state::S;
-    check_steps = 1000,
+    check_sweeps = 100,
     max_total_steps = Inf,
     final_logf = 1e-6,
     logf_strategy = nothing,
@@ -42,6 +44,8 @@ function WangLandauSimulation(state::S;
     D = length(dims)
     C = catchup_enabled(catchup)
 
+    check_steps = check_sweeps * system_size(state)
+
     if isnothing(logf_strategy)
         logf_strategy = ReduceByFactor(; final = final_logf)
     end
@@ -55,17 +59,17 @@ function WangLandauSimulation(state::S;
 
     return WangLandauSimulation{S,C,D}(
         state,
-        samples,
-        logdos,
         logf_strategy,
         flat_strategy,
+        catchup,
         check_steps,
         0,
         0,
         0,
         max_total_steps,
-        catchup,
-        0.0
+        0.0,
+        samples,
+        logdos,
         )
 end
 
@@ -75,7 +79,9 @@ function Base.show(io::IO, sim::WangLandauSimulation{S}) where {S}
     println(io, "WangLandauSimulation{", S, "}")
     println(io, "  log(f) = ", logf, " (final: ", final_logf, ")")
     println(io, "  iterations: ", sim.flat_iterations, " (checks: ", sim.flat_checks,")")
-    print(io, "  total steps: ", sim.total_steps)
+    println(io, "  total steps: ", sim.total_steps)
+    @printf io "  elapsed time: %.2e s" sim.elapsed_time
+    # print(io, "  elapsed time: ", sim.elapsed_time, " s")
     return nothing
 end
 

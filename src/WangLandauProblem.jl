@@ -1,7 +1,7 @@
 # todo: Need possible different type for argument and output of initialise_state
 # CommonSolve.jl interface
 """
-    WangLandauProblem(state::S)
+    WangLandauProblem(statedef::S)
 
 `WangLandau.jl` works by requiring user definitions of the following
 generic functions:
@@ -15,7 +15,7 @@ Optional user definitions:
 - [`initialise_state`](@ref): Optional initialisation step.
 """
 struct WangLandauProblem{S}
-    state::S
+    statedef::S
 end
 
 """
@@ -27,6 +27,11 @@ CommonSolve.solve
     histogram_size(state::S)
 """
 function histogram_size end
+
+"""
+    system_size(state::S)
+"""
+function system_size end
 
 """
     random_trial!(state::S) -> trial::T, old_index::I, new_index::I
@@ -43,14 +48,17 @@ See also [`random_trial!`](@ref).
 function commit_trial! end
 
 """
-    initialise_state(state::S)
+    initialise_state(statedef::DefType)::StateType
 
-Initialise a new `state` for use in a [`WangLandauSimulation`](@ref). By
-default this returns the state used to construct the
-[`WangLandauProblem`](@ref), but is provided as part of the public API
-with the intention of defining a lightweight struct in
+Initialise a new `state::StateType` for use in a
+[`WangLandauSimulation`](@ref) based on the defintion
+`statedef::DefType` provided to [`WangLandauProblem`](@ref). `DefType`
+and `StateType` are defined by the user and can be the same. By default
+this function copies `statedef`, but is provided as part of the public
+API with the intention of defining a lightweight struct in
 `WangLandauProblem` and delaying any computationally intensive
-initialisation until `WangLandauSimulation`. Called from
+initialisation until [`solve`](@ref) is called. It also allows for
+reseeding the state for use with multiple threads. Called from
 [`CommonSolve.init`](@ref).
 """
-initialise_state(state) = state
+initialise_state(state) = copy(state)

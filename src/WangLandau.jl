@@ -6,6 +6,7 @@ using TerminalLoggers: TerminalLogger
 using Logging: ConsoleLogger, global_logger
 using StaticArrays: StaticArrays, SVector, MVector
 using Random: Random, seed!, shuffle!
+using Printf: @printf
 import TOML
 
 const PACKAGE_VERSION = VersionNumber(TOML.parsefile(pkgdir(@__MODULE__, "Project.toml"))["version"])
@@ -24,7 +25,7 @@ export CatchupStrategy, NoCatchup, FixedFractionalCatchup#, DynamicFractionalCat
 export DosIncrementStrategy, ReduceByFactor
 export FlatHistogramStrategy, FractionOfMean, StableNumVisits
 
-export initialise_state, random_trial!, commit_trial!, histogram_size
+export initialise_state, random_trial!, commit_trial!, histogram_size, system_size
 
 include("strategies/catchup.jl")
 include("strategies/f_increment.jl")
