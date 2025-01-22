@@ -2,7 +2,7 @@ using WangLandau
 
 # simple 2D Ising model - free boundary conditions, no field
 
-function ising_full_energy(grid)
+function ising_free_energy(grid)
     L = size(grid)[1]
     energy = 0
     for i in 1:L-1
@@ -17,24 +17,50 @@ function ising_full_energy(grid)
     return -energy
 end
 
-function local_energy(grid, L, site)
+function ising_periodic_energy(grid)
+    L = size(grid)[1]
+    energy = 0
+    for i in 1:L
+        for j in 1:L
+            energy += grid[i,j] * grid[mod1(i + 1, L),j]   # below
+            energy += grid[i,j] * grid[i,mod1(j + 1, L)]   # right
+        end
+    end
+
+    return -energy
+end
+
+# actual energy change is twice local energy
+function local_free_energy(grid, site)
+    L = size(grid)[1]
     i, j = Tuple(site)
     ΔE = 0
     ΔE += i > 1 ? grid[i-1,j] : 0   # above
     ΔE += i < L ? grid[i+1,j] : 0   # below
     ΔE += j > 1 ? grid[i,j-1] : 0   # left
     ΔE += j < L ? grid[i,j+1] : 0   # right
-    return ΔE
+    return ΔE * grid[site]
 end
 
-mutable struct Ising2D
+function local_periodic_energy(grid, site)
+    L = size(grid)[1]
+    i, j = Tuple(site)
+    ΔE = 0
+    ΔE += i > 1 ? grid[i-1,j] : grid[L,j]   # above
+    ΔE += i < L ? grid[i+1,j] : grid[1,j]   # below
+    ΔE += j > 1 ? grid[i,j-1] : grid[i,L]   # left
+    ΔE += j < L ? grid[i,j+1] : grid[i,1]   # right
+    return ΔE * grid[site]
+end
+
+mutable struct Ising2D{P}
     const L::Int
     const maxE::Int
     energy::Int
     spins::Matrix{Int}
 end
-function Ising2D(L; initial_state = nothing)
-    maxE = 2 * (L - 1)^2 + 2 * (L - 1)  # equiv to: ising_full_energy(ones(Int,L,L))
+function Ising2D(L; initial_state = nothing, periodic = false)
+    maxE = 2 * (L - !periodic)^2 + 2 * (L - !periodic)  # equiv to: ising_full_energy(ones(Int, L, L))
     if isnothing(initial_state)
         initial_state = rand((-1, 1), (L, L))
     else
@@ -45,18 +71,28 @@ function Ising2D(L; initial_state = nothing)
         maximum(initial_state) in (-1,1) || throw(is_err)
         0 in initial_state && throw(is_err)
     end
-    E0 = ising_full_energy(initial_state) + maxE + 1
-    return Ising2D(L, maxE, E0, initial_state)
+    if periodic
+        E0 = ising_periodic_energy(initial_state)
+    else
+        E0 = ising_free_energy(initial_state)
+    end
+    Eindex = (E0 + maxE) ÷ 2 ÷ (1 + periodic) + 1
+    return Ising2D{periodic}(L, maxE, Eindex, initial_state)
+end
+
+function Base.copy(state::Ising2D{P}) where {P}
+    return Ising2D{P}(state.L, state.maxE, state.energy, copy(state.spins))
 end
 
 # WangLandau.jl API
-WangLandau.histogram_size(state::Ising2D) = (2state.maxE + 1, )
+WangLandau.histogram_size(state::Ising2D{P}) where {P} = (state.maxE ÷ (1 + P) + 1, )
+WangLandau.system_size(state::Ising2D) = state.L^2
 
-function WangLandau.random_trial!(state::Ising2D)
+function WangLandau.random_trial!(state::Ising2D{Periodic}) where {Periodic}
     L = state.L
     site = rand(CartesianIndices((L, L)))
     oldE = state.energy
-    ΔE = state.spins[site] * local_energy(state.spins, state.L, site)
+    ΔE = Periodic ? local_periodic_energy(state.spins, site) ÷ 2 : local_free_energy(state.spins, site)
     newE = oldE + ΔE
     return site, oldE, newE
 end
