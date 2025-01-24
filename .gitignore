@@ -6,4 +6,4 @@
 /docs/build/
 .vscode
 /temp/
-*.ipynb
+/devtests/
