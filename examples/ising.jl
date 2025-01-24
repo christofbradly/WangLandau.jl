@@ -88,6 +88,10 @@ end
 WangLandau.histogram_size(state::Ising2D{P}) where {P} = (state.maxE ÷ (1 + P) + 1, )
 WangLandau.system_size(state::Ising2D) = state.L^2
 
+function WangLandau.initialise_state(state::Ising2D{P}) where {P}
+    return Ising2D(state.L; periodic = P)
+end
+
 function WangLandau.random_trial!(state::Ising2D{Periodic}) where {Periodic}
     L = state.L
     site = rand(CartesianIndices((L, L)))

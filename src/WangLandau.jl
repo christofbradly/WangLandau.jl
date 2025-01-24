@@ -1,6 +1,7 @@
 module WangLandau
 
 using CommonSolve: CommonSolve, init, solve, solve!, step!
+using Atomix: Atomix, @atomic
 using ProgressLogging: @logprogress, @withprogress
 using TerminalLoggers: TerminalLogger
 using Logging: ConsoleLogger, global_logger
