@@ -96,16 +96,13 @@ function CommonSolve.init(prob::WangLandauProblem; kwargs...)
 end
 
 """
-    wl_trial!(state, logdos, temp_hist, logf)
+    wl_trial!(state, logdos, temp_hist, logf, catchup)
 
 Obtain a single trial move, compare to current `state` and commit or
 reject Then increment the density of states `logdos` and histogram
 `temp_hist`, with `logf` and `1`, respectively.
 """
-function wl_trial!(
-    state, flat_iterations, logdos, logf_strategy, catchup_strategy::CatchupStrategy{C},
-    temp_hist,
-    ) where {C}
+function wl_trial!(state, logdos, temp_hist, logf, catchup_strategy::CatchupStrategy{C}) where {C}
 
     trial, old_index, new_index = random_trial!(state)
     
@@ -120,10 +117,10 @@ function wl_trial!(
     end
     temp_hist[new_index] += 1
 
-    if C && iszero(new_dos) && flat_iterations > 0
+    if C && iszero(new_dos)
         logdos_incr = catchup_value(catchup_strategy)
     else
-        logdos_incr = current_value(logf_strategy)
+        logdos_incr = logf
     end
     logdos[new_index] += logdos_incr
 
@@ -145,9 +142,10 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     @info "Starting simulation..."
     @withprogress name = "WangLandau" begin
         while !isconverged(sim.logf_strategy)
-            (; state, flat_iterations, logdos, logf_strategy, catchup_strategy) = sim
+            (; state, logdos, logf_strategy, catchup_strategy) = sim
+            logf = current_value(logf_strategy)
             for _ in 1:sim.check_steps
-                wl_trial!(state, flat_iterations, logdos, logf_strategy, catchup_strategy, temp_hist)
+                wl_trial!(state, logdos, temp_hist, logf, catchup_strategy)
             end
 
             if isflat(sim.flat_strategy, temp_hist)
