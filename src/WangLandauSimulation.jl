@@ -13,6 +13,9 @@ Keyword arguments:
 - `tol = 0.8`: Set tolerance for the flatness of the histogram.
 - `flat_strategy = FractionOfMean(tol)`: Define the flatness criterion
   for the histogram. Overrides `tol`.
+- `tasks_per_thread = 4`: a multiplier for determining the number of
+  tasks to `@spawn`. Set to `0` to disable concurrent threads even if more
+  than one thread is running.
 """
 mutable struct WangLandauSimulation{S,D,I,F,C}
     statedef::S
@@ -23,7 +26,8 @@ mutable struct WangLandauSimulation{S,D,I,F,C}
     flat_checks::Int
     flat_iterations::Int
     total_steps::Int
-    const max_total_steps::Float64    
+    const max_total_steps::Float64
+    const tasks_per_thread::Int
     elapsed_time::Float64
     samples::Array{Int,D}
     logdos::Array{Float64,D}
@@ -31,6 +35,7 @@ end
 function WangLandauSimulation(statedef::S;
     check_sweeps = 100,
     max_total_steps = Inf,
+    tasks_per_thread = 4,
     final_logf = 1e-6,
     logf_strategy = nothing,
     flat_tolerance = 0.9,
@@ -56,7 +61,7 @@ function WangLandauSimulation(statedef::S;
         @warn "`max_total_steps` is less than expected number; overwriting to expected number of steps."
         max_total_steps = expected_iterations(logf_strategy) * check_steps
     end
-
+    tasks_per_thread ≥ 0 || throw(ArgumentError("Task multiplier must be non-negative."))
     I, F, C = typeof.((logf_strategy, flat_strategy, catchup_strategy))
 
     return WangLandauSimulation{S,D,I,F,C}(
@@ -69,6 +74,7 @@ function WangLandauSimulation(statedef::S;
         0,
         0,
         max_total_steps,
+        tasks_per_thread,
         0.0,
         samples,
         logdos,
@@ -107,8 +113,8 @@ function wl_trial!(state, logdos, histogram, logf, catchup_strategy::CatchupStra
 
     trial, old_index, new_index = random_trial!(state)
     
-    old_dos = logdos[old_index]
-    new_dos = logdos[new_index]
+    old_dos = Atomix.@atomic logdos[old_index]
+    new_dos = Atomix.@atomic logdos[new_index]
 
     # faster than log(rand())
     if rand() < exp(old_dos - new_dos)
@@ -116,14 +122,14 @@ function wl_trial!(state, logdos, histogram, logf, catchup_strategy::CatchupStra
     else
         new_index = old_index
     end
-    histogram[new_index] += 1
-
+    
     if C && iszero(new_dos)
-        logdos_incr = catchup_value(catchup_strategy)
+        logdos_incr = catchup_value(catchup_strategy)   # not atomic
     else
         logdos_incr = logf
     end
-    logdos[new_index] += logdos_incr
+    Atomix.@atomic logdos[new_index] += logdos_incr
+    Atomix.@atomic histogram[new_index] += 1
 
     return nothing
 end
@@ -133,12 +139,21 @@ end
 
 Run `sim` for a single iteration until the `histogram` is flat.
 """
-function CommonSolve.step!(sim::WangLandauSimulation, state, histogram)
+function CommonSolve.step!(sim::WangLandauSimulation, histogram, states, task_samples, chunk_size)
     (; logdos, logf_strategy, catchup_strategy) = sim
     logf = current_value(logf_strategy)
-    for _ in 1:sim.check_steps
-        wl_trial!(state, logdos, histogram, logf, catchup_strategy)
+
+    chunks = Base.Iterators.partition(1:sim.check_steps, chunk_size)
+    tasks = map(enumerate(chunks)) do (i, chunk)
+        Threads.@spawn begin
+            state = states[$i]
+            for _ in chunk
+                wl_trial!(state, logdos, histogram, logf, catchup_strategy)
+            end
+            return length(chunk)
+        end
     end
+    task_samples .+= fetch.(tasks)
 
     flat = isflat(sim.flat_strategy, histogram)
     if flat
@@ -146,6 +161,7 @@ function CommonSolve.step!(sim::WangLandauSimulation, state, histogram)
         sim.flat_iterations += 1
         sim.samples .+= histogram
         histogram .= 0
+        @info "flat!", sim.flat_iterations, logf, sim.flat_checks, task_samples
     end
     update!(sim.flat_strategy, sim)
     update!(sim.catchup_strategy, sim)
@@ -161,16 +177,21 @@ end
 Run WangLandau algorithm on `sim`.
 """
 function CommonSolve.solve!(sim::WangLandauSimulation)
-    temp_hist = zeros(Int, size(sim.samples))
-    state = initialise_state(sim.statedef)
+    # multi-threading setup
+    task_sets = max(1, sim.tasks_per_thread * Threads.nthreads())
+    chunk_size = sim.check_steps ÷ task_sets + 1
+    states = [initialise_state(sim.statedef) for _ in 1:task_sets]
+    task_samples = zeros(Int, task_sets)
 
+    # local diagnostics
+    temp_hist = zeros(Int, size(sim.samples))
     total_iterations = expected_iterations(sim.logf_strategy)
 
     starting_time = time() + sim.elapsed_time
     @info "Starting simulation..."
     @withprogress name = "WangLandau" begin
         while !isconverged(sim.logf_strategy)
-            flag = CommonSolve.step!(sim, state, temp_hist)
+            flag = CommonSolve.step!(sim, temp_hist, states, task_samples, chunk_size)
             if flag
                 @debug "Flat! after", sim.flat_iterations, " iterations."
             end
