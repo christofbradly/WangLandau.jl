@@ -14,11 +14,11 @@ Keyword arguments:
 - `flat_strategy = FractionOfMean(tol)`: Define the flatness criterion
   for the histogram. Overrides `tol`.
 """
-mutable struct WangLandauSimulation{S,C,D}
+mutable struct WangLandauSimulation{S,D,I,F,C}
     state::S
-    logf_strategy::DosIncrementStrategy
-    flat_strategy::FlatHistogramStrategy
-    catchup_strategy::CatchupStrategy{C}
+    logf_strategy::I
+    flat_strategy::F
+    catchup_strategy::C
     const check_steps::Int
     flat_checks::Int
     flat_iterations::Int
@@ -42,7 +42,7 @@ function WangLandauSimulation(state::S;
     logdos = zeros(dims)
     samples = zeros(Int, dims)
     D = length(dims)
-    C = catchup_enabled(catchup_strategy)
+    # C = catchup_enabled(catchup_strategy)
 
     check_steps = check_sweeps * system_size(state)
 
@@ -57,7 +57,9 @@ function WangLandauSimulation(state::S;
         max_total_steps = expected_iterations(logf_strategy) * check_steps
     end
 
-    return WangLandauSimulation{S,C,D}(
+    I, F, C = typeof.((logf_strategy, flat_strategy, catchup_strategy))
+
+    return WangLandauSimulation{S,D,I,F,C}(
         state,
         logf_strategy,
         flat_strategy,
