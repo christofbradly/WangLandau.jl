@@ -145,15 +145,14 @@ function CommonSolve.step!(sim::WangLandauSimulation, state, histogram)
         update!(sim.logf_strategy)
         sim.flat_iterations += 1
         sim.samples .+= histogram
-        histogram = zero(histogram)
+        histogram .= 0
     end
     update!(sim.flat_strategy, sim)
     update!(sim.catchup_strategy, sim)
     sim.flat_checks += 1
     sim.total_steps += sim.check_steps
 
-    # need to return histogram to lock in reset to zero()
-    return histogram, flat
+    return flat
 end
 
 """
@@ -171,7 +170,7 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     @info "Starting simulation..."
     @withprogress name = "WangLandau" begin
         while !isconverged(sim.logf_strategy)
-            temp_hist, flag = CommonSolve.step!(sim, state, temp_hist)
+            flag = CommonSolve.step!(sim, state, temp_hist)
             if flag
                 @debug "Flat! after", sim.flat_iterations, " iterations."
             end
