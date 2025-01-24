@@ -58,14 +58,12 @@ function commit_trial! end
     initialise_state(statedef::DefType)::StateType
 
 Initialise a new `state::StateType` for use in a
-[`WangLandauSimulation`](@ref) based on the defintion
+[`WangLandauSimulation`](@ref) based on the definition
 `statedef::DefType` provided to [`WangLandauProblem`](@ref). `DefType`
-and `StateType` are defined by the user and can be the same. By default
-this function copies `statedef`, but is provided as part of the public
-API with the intention of defining a lightweight struct in
-`WangLandauProblem` and delaying any computationally intensive
-initialisation until [`solve`](@ref) is called. It also allows for
-reseeding the state for use with multiple threads. Called from
-[`CommonSolve.init`](@ref).
+and `StateType` are defined by the user and can be the same, but can be
+different if initialisation is  computationally intensive. If the types
+are the same then this function can simply `copy` the input, but ideally
+it should reseed a new configuration. Called from
+[`CommonSolve.solve!`](@ref) to seed multiple threads.
 """
-initialise_state(statedef) = copy(statedef)
+function initialise_state end

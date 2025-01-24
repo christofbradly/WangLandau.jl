@@ -161,7 +161,7 @@ function CommonSolve.step!(sim::WangLandauSimulation, histogram, states, task_sa
         sim.flat_iterations += 1
         sim.samples .+= histogram
         histogram .= 0
-        @info "flat!", sim.flat_iterations, logf, sim.flat_checks, task_samples
+        @debug "flat!", sim.flat_iterations, logf, sim.flat_checks, task_samples
     end
     update!(sim.flat_strategy, sim)
     update!(sim.catchup_strategy, sim)
