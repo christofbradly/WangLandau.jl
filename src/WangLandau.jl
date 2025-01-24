@@ -27,9 +27,9 @@ export FlatHistogramStrategy, FractionOfMean, StableNumVisits
 
 export initialise_state, random_trial!, commit_trial!, histogram_size, system_size
 
-include("strategies/catchup.jl")
 include("strategies/f_increment.jl")
 include("strategies/flatness.jl")
+include("strategies/catchup.jl")
 include("WangLandauProblem.jl")
 include("WangLandauSimulation.jl")
 

@@ -18,7 +18,7 @@ mutable struct WangLandauSimulation{S,C,D}
     state::S
     logf_strategy::DosIncrementStrategy
     flat_strategy::FlatHistogramStrategy
-    catchup::CatchupStrategy{C}
+    catchup_strategy::CatchupStrategy{C}
     const check_steps::Int
     flat_checks::Int
     flat_iterations::Int
@@ -35,14 +35,14 @@ function WangLandauSimulation(state::S;
     logf_strategy = nothing,
     flat_tolerance = 0.9,
     flat_strategy = nothing,
-    catchup = NoCatchup()
+    catchup_strategy = NoCatchup()
     ) where {S}
 
     dims = histogram_size(state)
     logdos = zeros(dims)
     samples = zeros(Int, dims)
     D = length(dims)
-    C = catchup_enabled(catchup)
+    C = catchup_enabled(catchup_strategy)
 
     check_steps = check_sweeps * system_size(state)
 
@@ -61,7 +61,7 @@ function WangLandauSimulation(state::S;
         state,
         logf_strategy,
         flat_strategy,
-        catchup,
+        catchup_strategy,
         check_steps,
         0,
         0,
@@ -105,7 +105,7 @@ function CommonSolve.step!(
     temp_hist,
     ) where {C}
 
-    (; state, flat_iterations, logdos, logf_strategy) = sim
+    (; state, flat_iterations, logdos, logf_strategy, catchup_strategy) = sim
 
     trial, old_index, new_index = random_trial!(state)
     
@@ -120,10 +120,12 @@ function CommonSolve.step!(
     end
     temp_hist[new_index] += 1
 
-    if C && iszero(logdos[new_index]) && flat_iterations > 0
-        logdos[new_index] = catchup_value(sim.catchup; logdos)
+    if C && iszero(new_dos) && flat_iterations > 0
+        logdos_incr = catchup_value(catchup_strategy)
+    else
+        logdos_incr = current_value(logf_strategy)
     end
-    logdos[new_index] += current_value(logf_strategy)
+    logdos[new_index] += logdos_incr
 
     return nothing
 end
@@ -154,6 +156,7 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
                 temp_hist = zeros(Int, dims)
             end
             update!(sim.flat_strategy, sim)
+            update!(sim.catchup_strategy, sim)
 
             sim.flat_checks += 1
             sim.total_steps += sim.check_steps

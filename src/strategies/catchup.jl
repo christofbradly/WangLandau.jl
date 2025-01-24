@@ -19,9 +19,14 @@ abstract type CatchupStrategy{B} end
 catchup_enabled(::CatchupStrategy{B}) where {B} = B
 
 """
-    catchup_value(strat, sim)
+    catchup_value(strat)
 """
 catchup_value
+
+"""
+    update!(strat, sim)
+"""
+update!(strat::CatchupStrategy, _) = strat
 
 """
     NoCatchup() <: CatchupStrategy{false}
@@ -41,16 +46,21 @@ end
 When a new state is visited for the first time, the density of states is
 set to a fixed fraction of the smallest current non-zero value.
 """
-struct FixedFractionalCatchup{B} <: CatchupStrategy{B}
-    fraction::Float64
+mutable struct FixedFractionalCatchup{B} <: CatchupStrategy{B}
+    const fraction::Float64
+    minval::Float64
 end
 function FixedFractionalCatchup(f)
-    return FixedFractionalCatchup{true}(f)
+    return FixedFractionalCatchup{true}(f, 0.0)
 end
 
-function catchup_value(strat::FixedFractionalCatchup; sim)
-    dos = sim.logdos
-    return minimum(dos[dos .> 0]) * strat.fraction
+function catchup_value(strat::FixedFractionalCatchup)
+    return strat.minval * strat.fraction
+end
+
+function update!(strat::FixedFractionalCatchup, sim)
+    strat.minval = minimum(sim.logdos[sim.logdos .> 0])
+    return strat
 end
 
 # todo: How to implement this?
@@ -61,12 +71,18 @@ When a new state is visited for the first time, the density of states is
 set to a fraction of the smallest current non-zero value. The fraction
 is determined from the current value of `\\log f`.
 """
-struct DynamicFractionalCatchup{B} <: CatchupStrategy{B}
-    DynamicFractionalCatchup() = new{true}()
+mutable struct DynamicFractionalCatchup{B} <: CatchupStrategy{B}
+    value::Float64
+    DynamicFractionalCatchup() = new{true}(1.0, 0.0)
 end
 
-function catchup_value(::DynamicFractionalCatchup; sim)
-    dos = sim.logdos
+function catchup_value(strat::DynamicFractionalCatchup)
+    return strat.value
+end
+
+function update!(strat::DynamicFractionalCatchup; sim)
+    minval = minimum(sim.logdos[sim.logdosdos .> 0])
     logf = current_value(sim.logf_strategy)
-    return minimum(dos[dos .> 0]) * (1 - logf)
+    strat.value = minval * logf
+    return strat
 end
