@@ -75,10 +75,10 @@ function WangLandauSimulation(state::S;
         )
 end
 
-function Base.show(io::IO, sim::WangLandauSimulation{S}) where {S}
+function Base.show(io::IO, sim::WangLandauSimulation)
     logf = current_value(sim.logf_strategy)
     final_logf = final_value(sim.logf_strategy)
-    println(io, "WangLandauSimulation{", S, "}")
+    println(io, "WangLandauSimulation(", sim.state, ")")
     println(io, "  log(f) = ", logf, " (final: ", final_logf, ")")
     println(io, "  iterations: ", sim.flat_iterations, " (checks: ", sim.flat_checks,")")
     println(io, "  total steps: ", sim.total_steps)
