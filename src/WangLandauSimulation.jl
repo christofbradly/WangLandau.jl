@@ -15,7 +15,7 @@ Keyword arguments:
   for the histogram. Overrides `tol`.
 """
 mutable struct WangLandauSimulation{S,D,I,F,C}
-    state::S
+    statedef::S
     logf_strategy::I
     flat_strategy::F
     catchup_strategy::C
@@ -28,7 +28,7 @@ mutable struct WangLandauSimulation{S,D,I,F,C}
     samples::Array{Int,D}
     logdos::Array{Float64,D}
 end
-function WangLandauSimulation(state::S;
+function WangLandauSimulation(statedef::S;
     check_sweeps = 100,
     max_total_steps = Inf,
     final_logf = 1e-6,
@@ -38,13 +38,13 @@ function WangLandauSimulation(state::S;
     catchup_strategy = NoCatchup()
     ) where {S}
 
-    dims = histogram_size(state)
+    dims = histogram_size(statedef)
     logdos = zeros(dims)
     samples = zeros(Int, dims)
     D = length(dims)
     # C = catchup_enabled(catchup_strategy)
 
-    check_steps = check_sweeps * system_size(state)
+    check_steps = check_sweeps * system_size(statedef)
 
     if isnothing(logf_strategy)
         logf_strategy = ReduceByFactor(; final = final_logf)
@@ -60,7 +60,7 @@ function WangLandauSimulation(state::S;
     I, F, C = typeof.((logf_strategy, flat_strategy, catchup_strategy))
 
     return WangLandauSimulation{S,D,I,F,C}(
-        state,
+        statedef,
         logf_strategy,
         flat_strategy,
         catchup_strategy,
@@ -78,7 +78,7 @@ end
 function Base.show(io::IO, sim::WangLandauSimulation)
     logf = current_value(sim.logf_strategy)
     final_logf = final_value(sim.logf_strategy)
-    println(io, "WangLandauSimulation(", sim.state, ")")
+    println(io, "WangLandauSimulation(", sim.statedef, ")")
     println(io, "  log(f) = ", logf, " (final: ", final_logf, ")")
     println(io, "  iterations: ", sim.flat_iterations, " (checks: ", sim.flat_checks,")")
     println(io, "  total steps: ", sim.total_steps)
@@ -93,8 +93,7 @@ end
 Initialise a [`WangLandauSimulation`](@ref) based on `problem`.
 """
 function CommonSolve.init(prob::WangLandauProblem; kwargs...)
-    state = initialise_state(prob.statedef)
-    return WangLandauSimulation(state; kwargs...)
+    return WangLandauSimulation(prob.statedef; kwargs...)
 end
 
 """
@@ -134,8 +133,8 @@ end
 
 Run `sim` for a single iteration until the `histogram` is flat.
 """
-function CommonSolve.step!(sim::WangLandauSimulation, histogram)
-    (; state, logdos, logf_strategy, catchup_strategy) = sim
+function CommonSolve.step!(sim::WangLandauSimulation, state, histogram)
+    (; logdos, logf_strategy, catchup_strategy) = sim
     logf = current_value(logf_strategy)
     for _ in 1:sim.check_steps
         wl_trial!(state, logdos, histogram, logf, catchup_strategy)
@@ -153,6 +152,7 @@ function CommonSolve.step!(sim::WangLandauSimulation, histogram)
     sim.flat_checks += 1
     sim.total_steps += sim.check_steps
 
+    # need to return histogram to lock in reset to zero()
     return histogram, flat
 end
 
@@ -163,6 +163,7 @@ Run WangLandau algorithm on `sim`.
 """
 function CommonSolve.solve!(sim::WangLandauSimulation)
     temp_hist = zeros(Int, size(sim.samples))
+    state = initialise_state(sim.statedef)
 
     total_iterations = expected_iterations(sim.logf_strategy)
 
@@ -170,9 +171,9 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     @info "Starting simulation..."
     @withprogress name = "WangLandau" begin
         while !isconverged(sim.logf_strategy)
-            temp_hist, flag = CommonSolve.step!(sim, temp_hist)
+            temp_hist, flag = CommonSolve.step!(sim, state, temp_hist)
             if flag
-                @debug "Flat! after", sim.flat_iterations, " iterations"
+                @debug "Flat! after", sim.flat_iterations, " iterations."
             end
 
             if sim.total_steps > sim.max_total_steps 
