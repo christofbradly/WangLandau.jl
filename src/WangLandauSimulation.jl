@@ -102,7 +102,7 @@ Obtain a single trial move, compare to current `state` and commit or
 reject Then increment the density of states `logdos` and histogram
 `temp_hist`, with `logf` and `1`, respectively.
 """
-function wl_trial!(state, logdos, temp_hist, logf, catchup_strategy::CatchupStrategy{C}) where {C}
+function wl_trial!(state, logdos, histogram, logf, catchup_strategy::CatchupStrategy{C}) where {C}
 
     trial, old_index, new_index = random_trial!(state)
     
@@ -115,7 +115,7 @@ function wl_trial!(state, logdos, temp_hist, logf, catchup_strategy::CatchupStra
     else
         new_index = old_index
     end
-    temp_hist[new_index] += 1
+    histogram[new_index] += 1
 
     if C && iszero(new_dos)
         logdos_incr = catchup_value(catchup_strategy)
@@ -128,13 +128,39 @@ function wl_trial!(state, logdos, temp_hist, logf, catchup_strategy::CatchupStra
 end
 
 """
+    CommonSolve.step!(sim::WangLandauSimulation, histogram)
+
+Run `sim` for a single iteration until the `histogram` is flat.
+"""
+function CommonSolve.step!(sim::WangLandauSimulation, histogram)
+    (; state, logdos, logf_strategy, catchup_strategy) = sim
+    logf = current_value(logf_strategy)
+    for _ in 1:sim.check_steps
+        wl_trial!(state, logdos, histogram, logf, catchup_strategy)
+    end
+
+    flat = isflat(sim.flat_strategy, histogram)
+    if flat
+        update!(sim.logf_strategy)
+        sim.flat_iterations += 1
+        sim.samples .+= histogram
+        histogram = zero(histogram)
+    end
+    update!(sim.flat_strategy, sim)
+    update!(sim.catchup_strategy, sim)
+    sim.flat_checks += 1
+    sim.total_steps += sim.check_steps
+
+    return histogram, flat
+end
+
+"""
     CommonSolve.solve!(sim::WangLandauSimulation; kwargs...)
 
 Run WangLandau algorithm on `sim`.
 """
 function CommonSolve.solve!(sim::WangLandauSimulation)
-    dims = size(sim.samples)
-    temp_hist = zeros(Int, dims)
+    temp_hist = zeros(Int, size(sim.samples))
 
     total_iterations = expected_iterations(sim.logf_strategy)
 
@@ -142,23 +168,10 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     @info "Starting simulation..."
     @withprogress name = "WangLandau" begin
         while !isconverged(sim.logf_strategy)
-            (; state, logdos, logf_strategy, catchup_strategy) = sim
-            logf = current_value(logf_strategy)
-            for _ in 1:sim.check_steps
-                wl_trial!(state, logdos, temp_hist, logf, catchup_strategy)
+            temp_hist, flag = CommonSolve.step!(sim, temp_hist)
+            if flag
+                @debug "Flat! after", sim.flat_iterations, " iterations"
             end
-
-            if isflat(sim.flat_strategy, temp_hist)
-                update!(sim.logf_strategy)
-                sim.flat_iterations += 1
-                sim.samples .+= temp_hist
-                temp_hist = zeros(Int, dims)
-            end
-            update!(sim.flat_strategy, sim)
-            update!(sim.catchup_strategy, sim)
-
-            sim.flat_checks += 1
-            sim.total_steps += sim.check_steps
 
             if sim.total_steps > sim.max_total_steps 
                 @warn "Global maximum number of steps reached, ending simulation."
