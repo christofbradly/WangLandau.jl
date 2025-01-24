@@ -103,8 +103,3 @@ function WangLandau.commit_trial!(state::Ising2D, site, _, newE)
     1 ≤ state.energy ≤ 2state.maxE + 1 || throw(ErrorException("New energy is invalid."))
     return state
 end
-
-# L = 10
-# prob = WangLandauProblem(Ising2D(L; periodic = true))
-# solve(prob; final_logf = 1e-1)
-# @profview solve(prob)
