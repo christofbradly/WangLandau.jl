@@ -121,6 +121,7 @@ function wl_trial!(state, logdos, histogram, logf, catchup_strategy::CatchupStra
         commit_trial!(state, trial, old_index, new_index)
     else
         new_index = old_index
+        revert_trial!(state, trial, old_index, new_index)
     end
     
     if C && iszero(new_dos)
