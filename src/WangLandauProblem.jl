@@ -14,6 +14,8 @@ generic functions:
 
 Optional user definitions:
 - [`initialise_state`](@ref): Optional initialisation step.
+- [`revert_trial!`](@ref): Upon rejection of the trial move, update the
+  state, optionally according to the indices. By default returns `state`
 """
 struct WangLandauProblem{D}
     statedef::D
@@ -43,16 +45,24 @@ function system_size end
 """
     random_trial!(state::S) -> trial::T, old_index::I, new_index::I
 
-See also [`commit_trial!`](@ref).
+See also [`commit_trial!`](@ref), [`revert_trial!`](@ref).
 """
 function random_trial! end
 
 """
     commit_trial!(state::S, trial::T, old_index::I, new_index::I)
 
-See also [`random_trial!`](@ref).
+See also [`random_trial!`](@ref), [`revert_trial!`](@ref).
 """
 function commit_trial! end
+
+"""
+    revert_trial!(state::S, trial::T, old_index::I, new_index::I)
+
+By default returns `state`. See also [`random_trial!`](@ref),
+[`commit_trial!`](@ref).
+"""
+revert_trial!(state, trial, old_index, new_index) = state
 
 """
     initialise_state(statedef::DefType)::StateType
