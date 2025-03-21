@@ -45,12 +45,18 @@ function system_size end
 """
     random_trial!(state::S) -> trial::T, old_index::I, new_index::I
 
+Calculate a random `trial` move for `state`, as well as the `old_index`
+and `new_index`.
+
 See also [`commit_trial!`](@ref), [`revert_trial!`](@ref).
 """
 function random_trial! end
 
 """
     commit_trial!(state::S, trial::T, old_index::I, new_index::I)
+
+Update `state` by applying the `trial` move, using information
+from `old_index` and `new_index`, if necessary. 
 
 See also [`random_trial!`](@ref), [`revert_trial!`](@ref).
 """
@@ -59,8 +65,14 @@ function commit_trial! end
 """
     revert_trial!(state::S, trial::T, old_index::I, new_index::I)
 
-By default returns `state`. See also [`random_trial!`](@ref),
-[`commit_trial!`](@ref).
+Returns `state` to before `trial` move was performed, using information
+from `old_index` and `new_index`, if necessary. 
+    
+By default this returns `state` unaltered. Alternatively, if this method
+is defined, then it should be sufficient to define amethod for
+`commit_trial!` that returns `state` unaltered.
+
+See also [`random_trial!`](@ref), [`commit_trial!`](@ref).
 """
 revert_trial!(state, trial, old_index, new_index) = state
 
