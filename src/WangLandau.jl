@@ -26,7 +26,7 @@ export CatchupStrategy, NoCatchup, FixedFractionalCatchup#, DynamicFractionalCat
 export DosIncrementStrategy, ReduceByFactor
 export FlatHistogramStrategy, FractionOfMean, StableNumVisits
 
-export initialise_state, random_trial!, commit_trial!, histogram_size, system_size
+export initialise_state, random_trial!, commit_trial!, revert_trial!, histogram_size, system_size
 
 include("strategies/f_increment.jl")
 include("strategies/flatness.jl")
