@@ -116,8 +116,9 @@ function wl_trial!(state, logdos, histogram, logf, catchup_strategy::CatchupStra
     old_dos = Atomix.@atomic logdos[old_index]
     new_dos = Atomix.@atomic logdos[new_index]
 
-    # faster than log(rand())
-    if rand() < exp(old_dos - new_dos)
+    if isnothing(trial)     # no trial move found
+        new_index = old_index
+    elseif rand() < exp(old_dos - new_dos)  # faster than log(rand())
         commit_trial!(state, trial, old_index, new_index)
     else
         new_index = old_index
