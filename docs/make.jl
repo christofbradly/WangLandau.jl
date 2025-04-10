@@ -7,17 +7,20 @@ makedocs(;
     modules=[WangLandau],
     authors="Chris Bradly",
     sitename="WangLandau.jl",
+    remotes=nothing,
     format=Documenter.HTML(;
         canonical="https://christofbradly.github.io/WangLandau.jl",
         edit_link="main",
         assets=String[],
     ),
     pages=[
-        "Guide" => "guide.md",
+        "Home" => "index.md",
         "Example: Ising model" => "ising.md",
         "Advanced usage" => "advanced.md",
-        "Index" => "index.md"
+        "API" => "api.md"
     ],
+    # checkdocs=:exports,
+    doctest=false, # Doctests are done while testing.
 )
 
 deploydocs(;

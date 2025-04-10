@@ -16,12 +16,12 @@ const PACKAGE_VERSION = VersionNumber(TOML.parsefile(pkgdir(@__MODULE__, "Projec
     WangLandau
 
 This is `WangLandau` $PACKAGE_VERSION.
-Read the documentation [online]().
 """
 WangLandau
 
 export init, solve!, solve, step!  # from CommonSolve
 export WangLandauProblem
+public WangLandauSimulation
 export CatchupStrategy, NoCatchup, FixedFractionalCatchup#, DynamicFractionalCatchup
 export DosIncrementStrategy, ReduceByFactor
 export FlatHistogramStrategy, FractionOfMean, StableNumVisits
