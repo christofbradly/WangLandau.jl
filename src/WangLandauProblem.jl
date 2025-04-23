@@ -49,6 +49,8 @@ function system_size end
 Calculate a random `trial` move for `state`, as well as the `old_index`
 and `new_index`.
 
+If a trial move cannot be found return `nothing, old_index, old_index`.
+
 See also [`commit_trial!`](@ref), [`revert_trial!`](@ref).
 """
 function random_trial! end

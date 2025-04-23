@@ -149,10 +149,10 @@ function CommonSolve.step!(sim::WangLandauSimulation, histogram, states, task_sa
     tasks = map(enumerate(chunks)) do (i, chunk)
         Threads.@spawn begin
             state = states[$i]
-            for _ in chunk
-                wl_trial!(state, logdos, histogram, logf, catchup_strategy)
+            for _ in $chunk
+                wl_trial!(state, logdos, histogram, $logf, $catchup_strategy)
             end
-            return length(chunk)
+            return length($chunk)
         end
     end
     task_samples .+= fetch.(tasks)
@@ -181,7 +181,7 @@ Run WangLandau algorithm on `sim`.
 function CommonSolve.solve!(sim::WangLandauSimulation)
     # multi-threading setup
     task_sets = max(1, sim.tasks_per_thread * Threads.nthreads())
-    chunk_size = sim.check_steps ÷ task_sets + 1
+    chunk_size = sim.check_steps ÷ task_sets
     states = [initialise_state(sim.statedef) for _ in 1:task_sets]
     task_samples = zeros(Int, task_sets)
 
