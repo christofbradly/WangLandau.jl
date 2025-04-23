@@ -106,7 +106,7 @@ end
     wl_trial!(state, logdos, temp_hist, logf, catchup)
 
 Obtain a single trial move, compare to current `state` and commit or
-reject Then increment the density of states `logdos` and histogram
+reject. Then increment the density of states `logdos` and histogram
 `temp_hist`, with `logf` and `1`, respectively.
 """
 function wl_trial!(state, logdos, histogram, logf, catchup_strategy::CatchupStrategy{C}) where {C}

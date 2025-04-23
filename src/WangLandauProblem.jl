@@ -29,8 +29,9 @@ CommonSolve.solve
 """
     histogram_size(statedef::D)
 
-This should return an integer `n`, the number of possible energy
-levels accessible by `statedef`.
+Return a `Tuple` of integers that specify the size of the histograms.
+The first is canonically the number of possible energy levels accessible
+by `statedef`.
 """
 function histogram_size end
 
