@@ -188,8 +188,8 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     # local diagnostics
     temp_hist = zeros(Int, size(sim.samples))
     total_iterations = expected_iterations(sim.logf_strategy)
-
     starting_time = time() + sim.elapsed_time
+    
     @info "Starting simulation..."
     @withprogress name = "WangLandau" begin
         while !isconverged(sim.logf_strategy)
