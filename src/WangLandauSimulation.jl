@@ -22,15 +22,15 @@ mutable struct WangLandauSimulation{S,D,I,F,C}
     logf_strategy::I
     flat_strategy::F
     catchup_strategy::C
+    samples::Array{Int,D}
+    logdos::Array{Float64,D}
     const check_steps::Int
     flat_checks::Int
     flat_iterations::Int
+    const tasks_per_thread::Int
     total_steps::Int
     const max_total_steps::Float64
-    const tasks_per_thread::Int
-    elapsed_time::Float64
-    samples::Array{Int,D}
-    logdos::Array{Float64,D}
+    elapsed_time::Float64    
 end
 function WangLandauSimulation(statedef::S;
     check_sweeps = 100,

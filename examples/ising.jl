@@ -54,10 +54,10 @@ function local_periodic_energy(grid, site)
 end
 
 mutable struct Ising2D{P}
+    spins::Matrix{Int}
     const L::Int
     const maxE::Int
     energy::Int
-    spins::Matrix{Int}
 end
 function Ising2D(L; initial_state = nothing, periodic = false)
     maxE = 2 * (L - !periodic)^2 + 2 * (L - !periodic)  # equiv to: ising_full_energy(ones(Int, L, L))
