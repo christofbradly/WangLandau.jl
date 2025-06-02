@@ -54,10 +54,10 @@ function local_periodic_energy(grid, site)
 end
 
 mutable struct Ising2D{P}
+    spins::Matrix{Int}
     const L::Int
     const maxE::Int
     energy::Int
-    spins::Matrix{Int}
 end
 function Ising2D(L; initial_state = nothing, periodic = false)
     maxE = 2 * (L - !periodic)^2 + 2 * (L - !periodic)  # equiv to: ising_full_energy(ones(Int, L, L))
@@ -77,11 +77,11 @@ function Ising2D(L; initial_state = nothing, periodic = false)
         E0 = ising_free_energy(initial_state)
     end
     Eindex = (E0 + maxE) ÷ 2 ÷ (1 + periodic) + 1
-    return Ising2D{periodic}(L, maxE, Eindex, initial_state)
+    return Ising2D{periodic}(initial_state, L, maxE, Eindex)
 end
 
 function Base.copy(state::Ising2D{P}) where {P}
-    return Ising2D{P}(state.L, state.maxE, state.energy, copy(state.spins))
+    return Ising2D{P}(copy(state.spins), state.L, state.maxE, state.energy)
 end
 
 # WangLandau.jl API
