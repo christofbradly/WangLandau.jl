@@ -17,10 +17,10 @@ Keyword arguments:
   tasks to `@spawn`. Set to `0` to disable concurrent threads even if more
   than one thread is running.
 """
-mutable struct WangLandauSimulation{S,D,I,F,C}
-    statedef::S
-    samples::Array{Int,D}
-    logdos::Array{Float64,D}
+mutable struct WangLandauSimulation{D,N,I,F,C}
+    statedefn::D
+    samples::Array{Int,N}
+    logdos::Array{Float64,N}
     logf_strategy::I
     flat_strategy::F
     catchup_strategy::C    
@@ -32,7 +32,7 @@ mutable struct WangLandauSimulation{S,D,I,F,C}
     const max_total_steps::Float64
     elapsed_time::Float64    
 end
-function WangLandauSimulation(statedef::S;
+function WangLandauSimulation(statedefn::D;
     check_sweeps = 100,
     max_total_steps = Inf,
     tasks_per_thread = 4,
@@ -41,15 +41,15 @@ function WangLandauSimulation(statedef::S;
     flat_tolerance = 0.9,
     flat_strategy = nothing,
     catchup_strategy = NoCatchup()
-    ) where {S}
+    ) where {D}
 
-    dims = histogram_size(statedef)
+    dims = histogram_size(statedefn)
     logdos = zeros(dims)
     samples = zeros(Int, dims)
-    D = length(dims)
+    N = length(dims)
     # C = catchup_enabled(catchup_strategy)
 
-    check_steps = check_sweeps * system_size(statedef)
+    check_steps = check_sweeps * system_size(statedefn)
 
     if isnothing(logf_strategy)
         logf_strategy = ReduceByFactor(; final = final_logf)
@@ -64,8 +64,8 @@ function WangLandauSimulation(statedef::S;
     tasks_per_thread ≥ 0 || throw(ArgumentError("Task multiplier must be non-negative."))
     I, F, C = typeof.((logf_strategy, flat_strategy, catchup_strategy))
 
-    return WangLandauSimulation{S,D,I,F,C}(
-        statedef,
+    return WangLandauSimulation{D,N,I,F,C}(
+        statedefn,
         samples,
         logdos,
         logf_strategy,
@@ -84,7 +84,7 @@ end
 function Base.show(io::IO, sim::WangLandauSimulation)
     logf = current_value(sim.logf_strategy)
     final_logf = final_value(sim.logf_strategy)
-    println(io, "WangLandauSimulation(", sim.statedef, ")")
+    println(io, "WangLandauSimulation(", sim.statedefn, ")")
     println(io, "  log(f) = ", logf, " (final: ", final_logf, ")")
     println(io, "  iterations: ", sim.flat_iterations, " (checks: ", sim.flat_checks,")")
     println(io, "  total steps: ", sim.total_steps)
@@ -99,19 +99,20 @@ end
 Initialise a [`WangLandauSimulation`](@ref) based on `problem`.
 """
 function CommonSolve.init(prob::WangLandauProblem; kwargs...)
-    return WangLandauSimulation(prob.statedef; kwargs...)
+    return WangLandauSimulation(prob.statedefn; kwargs...)
 end
 
 """
-    wl_trial!(state, logdos, temp_hist, logf, catchup)
+    wl_trial!(state, old_index, statedefn, logdos, temp_hist, logf, catchup) -> new_index
 
 Obtain a single trial move, compare to current `state` and commit or
 reject. Then increment the density of states `logdos` and histogram
 `temp_hist`, with `logf` and `1`, respectively.
 """
-function wl_trial!(state, logdos, histogram, logf, catchup_strategy::CatchupStrategy{C}) where {C}
+function wl_trial!(state, old_index, statedefn, logdos, histogram, logf, catchup_strategy::CatchupStrategy{C}) where {C}
 
-    trial, old_index, new_index = random_trial!(state)
+    trial = random_trial!(state, statedefn)
+    new_index = hist_index(state, statedefn, trial, old_index)
     
     old_dos = Atomix.@atomic logdos[old_index]
     new_dos = Atomix.@atomic logdos[new_index]
@@ -119,10 +120,10 @@ function wl_trial!(state, logdos, histogram, logf, catchup_strategy::CatchupStra
     if isnothing(trial)     # no trial move found
         new_index = old_index
     elseif rand() < exp(old_dos - new_dos)  # faster than log(rand())
-        commit_trial!(state, trial, old_index, new_index)
+        commit_trial!(state, statedefn, trial, old_index, new_index)
     else
         new_index = old_index
-        revert_trial!(state, trial, old_index, new_index)
+        revert_trial!(state, statedefn, trial, old_index, new_index)
     end
     
     if C && iszero(new_dos)
@@ -133,7 +134,7 @@ function wl_trial!(state, logdos, histogram, logf, catchup_strategy::CatchupStra
     Atomix.@atomic logdos[new_index] += logdos_incr
     Atomix.@atomic histogram[new_index] += 1
 
-    return nothing
+    return new_index
 end
 
 """
@@ -141,16 +142,16 @@ end
 
 Run `sim` for a single iteration until the `histogram` is flat.
 """
-function CommonSolve.step!(sim::WangLandauSimulation, histogram, states, task_samples, chunk_size)
-    (; logdos, logf_strategy, catchup_strategy) = sim
+function CommonSolve.step!(sim::WangLandauSimulation, histogram, task_samples, chunk_size)
+    (; statedefn, logdos, logf_strategy, catchup_strategy) = sim
     logf = current_value(logf_strategy)
 
     chunks = Base.Iterators.partition(1:sim.check_steps, chunk_size)
     tasks = map(enumerate(chunks)) do (i, chunk)
         Threads.@spawn begin
-            state = states[$i]
+            state, index = initialise_state($statedefn)
             for _ in $chunk
-                wl_trial!(state, logdos, histogram, $logf, $catchup_strategy)
+                index = wl_trial!(state, index, $statedefn, logdos, histogram, $logf, $catchup_strategy)
             end
             return length($chunk)
         end
@@ -182,7 +183,6 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     # multi-threading setup
     task_sets = max(1, sim.tasks_per_thread * Threads.nthreads())
     chunk_size = sim.check_steps ÷ task_sets
-    states = [initialise_state(sim.statedef) for _ in 1:task_sets]
     task_samples = zeros(Int, task_sets)
 
     # local diagnostics
@@ -193,7 +193,7 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     @info "Starting simulation..."
     @withprogress name = "WangLandau" begin
         while !isconverged(sim.logf_strategy)
-            flag = CommonSolve.step!(sim, temp_hist, states, task_samples, chunk_size)
+            flag = CommonSolve.step!(sim, temp_hist, task_samples, chunk_size)
             if flag
                 @debug "Flat! after", sim.flat_iterations, " iterations."
             end
