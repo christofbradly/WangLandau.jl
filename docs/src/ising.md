@@ -53,7 +53,7 @@ If the histogram is flat then we can proceed to analysis.
 The samples histogram is indexed by ``i \in 1,\ldots,i_\mathrm{max}``, where ``i_\mathrm{max} = 2 (L - P)^2 + 2 (L - P)`` is the number of accessible energy values and ``P=0`` for free boundary and ``P=1`` for periodic boundary. This is more efficient for internal processing and the conversion to consecutive array indexing is handled by the `Ising2D` code. However, for physical analysis we want a range of real energy values. The extremal energy values for an ``L \times L`` lattice are ``\pm E_\mathrm{max}`` where ``E_\mathrm{max} = 2(L - (1 - P))^2 + 2(L - (1 - P))``, and the change in energy from flipping a single spin is ``2(1+P)``.
 In fact, ``E_\mathrm{max}`` is already stored in `Ising2D` so we can just define
 ```@example
-maxE = sim.statedef.maxE;
+maxE = sim.statedefn.maxE;
 
 Es = -maxE:(2*(1 + P)):maxE;
 ```
