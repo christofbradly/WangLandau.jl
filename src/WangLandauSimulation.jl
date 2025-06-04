@@ -17,10 +17,10 @@ Keyword arguments:
   tasks to `@spawn`. Set to `0` to disable concurrent threads even if more
   than one thread is running.
 """
-mutable struct WangLandauSimulation{S,D,I,F,C}
-    statedefn::S
-    samples::Array{Int,D}
-    logdos::Array{Float64,D}
+mutable struct WangLandauSimulation{D,N,I,F,C}
+    statedefn::D
+    samples::Array{Int,N}
+    logdos::Array{Float64,N}
     logf_strategy::I
     flat_strategy::F
     catchup_strategy::C    
@@ -32,7 +32,7 @@ mutable struct WangLandauSimulation{S,D,I,F,C}
     const max_total_steps::Float64
     elapsed_time::Float64    
 end
-function WangLandauSimulation(statedefn::S;
+function WangLandauSimulation(statedefn::D;
     check_sweeps = 100,
     max_total_steps = Inf,
     tasks_per_thread = 4,
@@ -41,12 +41,12 @@ function WangLandauSimulation(statedefn::S;
     flat_tolerance = 0.9,
     flat_strategy = nothing,
     catchup_strategy = NoCatchup()
-    ) where {S}
+    ) where {D}
 
     dims = histogram_size(statedefn)
     logdos = zeros(dims)
     samples = zeros(Int, dims)
-    D = length(dims)
+    N = length(dims)
     # C = catchup_enabled(catchup_strategy)
 
     check_steps = check_sweeps * system_size(statedefn)
@@ -64,7 +64,7 @@ function WangLandauSimulation(statedefn::S;
     tasks_per_thread ≥ 0 || throw(ArgumentError("Task multiplier must be non-negative."))
     I, F, C = typeof.((logf_strategy, flat_strategy, catchup_strategy))
 
-    return WangLandauSimulation{S,D,I,F,C}(
+    return WangLandauSimulation{D,N,I,F,C}(
         statedefn,
         samples,
         logdos,
