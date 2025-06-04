@@ -142,18 +142,17 @@ end
 
 Run `sim` for a single iteration until the `histogram` is flat.
 """
-function CommonSolve.step!(sim::WangLandauSimulation, histogram, states, task_samples, chunk_size)
+function CommonSolve.step!(sim::WangLandauSimulation, histogram, task_samples, chunk_size)
     (; statedefn, logdos, logf_strategy, catchup_strategy) = sim
     logf = current_value(logf_strategy)
 
     chunks = Base.Iterators.partition(1:sim.check_steps, chunk_size)
     tasks = map(enumerate(chunks)) do (i, chunk)
         Threads.@spawn begin
-            state, index = states[$i]
+            state, index = initialise_state($statedefn)
             for _ in $chunk
                 index = wl_trial!(state, index, $statedefn, logdos, histogram, $logf, $catchup_strategy)
             end
-            println("finished chunk $i; index $index")
             return length($chunk)
         end
     end
@@ -184,7 +183,6 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     # multi-threading setup
     task_sets = max(1, sim.tasks_per_thread * Threads.nthreads())
     chunk_size = sim.check_steps ÷ task_sets
-    states = [initialise_state(sim.statedefn) for _ in 1:task_sets]
     task_samples = zeros(Int, task_sets)
 
     # local diagnostics
@@ -195,7 +193,7 @@ function CommonSolve.solve!(sim::WangLandauSimulation)
     @info "Starting simulation..."
     @withprogress name = "WangLandau" begin
         while !isconverged(sim.logf_strategy)
-            flag = CommonSolve.step!(sim, temp_hist, states, task_samples, chunk_size)
+            flag = CommonSolve.step!(sim, temp_hist, task_samples, chunk_size)
             if flag
                 @debug "Flat! after", sim.flat_iterations, " iterations."
             end

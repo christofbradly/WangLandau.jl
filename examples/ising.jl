@@ -113,11 +113,7 @@ function WangLandau.hist_index(spins, statedefn::Ising2D{Periodic}, site, old_in
         ΔE = local_energy_free(spins, site)
     end
     new_index = old_index + ΔE
-    energy = Periodic ? ising_energy_periodic(spins) : ising_energy_free(spins)
-    actual = (energy + statedefn.maxE) ÷ 2 ÷ (1 + Periodic) + 1
-    println((old_index, new_index, actual, energy, spins))
     if !(1 ≤ new_index ≤ statedefn.maxE ÷ (1 + Periodic) + 1)
-        println((site, old_index, new_index, ΔE, spins, Periodic, L, statedefn.maxE))
         throw(ErrorException("New energy is invalid."))
     end
     return new_index
