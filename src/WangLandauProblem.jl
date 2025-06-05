@@ -3,18 +3,9 @@
 """
     WangLandauProblem(statedefn::D)
 
-`WangLandau.jl` works by requiring user definitions of the following
-generic functions:
-- [`histogram_size`](@ref): the dimensions of the histogram.
-- [`system_size`](@ref): the size of the system.
-- [`initialise_state`](@ref): Optional initialisation step.
-- [`random_trial!`](@ref): Obtain a trial move and histogram indices for
-  old and new state.
-- [`hist_index`](@ref): Obtain the histogram index for the new state
-- [`commit_trial!`](@ref): Upon acceptance of the trial move, update the
-  state, optionally according to the indices.
-- [`revert_trial!`](@ref): Upon rejection of the trial move, update the
-  state, optionally according to the indices. By default returns `state`
+This is a simple wrapper for the user-defined `statedefn` that enables
+the `CommonSolve.jl` interface. It can be overloaded so that `statedefn`
+does not have to be instantiated directly first.
 """
 struct WangLandauProblem{D}
     statedefn::D

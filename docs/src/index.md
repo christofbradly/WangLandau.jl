@@ -32,10 +32,10 @@ The algorithm terminates when ``f`` reaches a predetermined size, for example, o
 
 WangLandau.jl adheres to the [CommonSolve](https://github.com/SciML/CommonSolve.jl) interface.
 ```julia
-prob = WangLandauProblem(::StateType)
+prob = WangLandauProblem(::SetupType)
 sim = CommonSolve.solve(prob; kwargs...)
 ```
-The `StateType` should be defined by the user for a specific problem. Several methods should be defined by the user to dispatch on `StateType`, see [`WangLandauProblem`](@ref) for details.
+The `SetupType` should be defined by the user for a specific problem. Several methods should be defined by the user to dispatch on `SetupType`, see [below](#user-defined-code) for details.
 The `kwargs` passed to `solve` define the parameters of the algorithm, and are ultimately passed to [`WangLandauSimulation`](@ref WangLandau.WangLandauSimulation), which is the main internal `struct` and the output type of `sim`. `WangLandauSimulation` is not exported and should not be constructed explicitly, it is handled via the `CommonSolve` interface.
 
 The main parameters include:
@@ -46,6 +46,29 @@ The main parameters include:
 The output `sim::WangLandauSimulation` will contain two `Array`s:
 - `sim.samples`: the histogram of samples ``h(E)``
 - `sim.logdos`: The (logarithm) of the density of states ``\log g(E)``
+
+### User-defined code
+
+To use `WangLandau.jl` the user should define a number of custom types and then several methods to act on those types. 
+
+The types referred to are
+- `SetupType`: a struct that holds the necessary parameters to instantiate a sample configuration and define trial moves
+- `StateType`: a data-structure that contains the configuration 
+- `TrialType`: data that defines how to perform a trial move between two states
+- `IndexType`: an index for the histogram
+
+These types can be simple, for example, a lattice-spin model like the Ising model may use `Matrix{Int}` for `StateType`, and then `TrialType` indexes a single element in the matrix to perform a spin flip. `IndexType` should be `Int` for one-parameter histograms, otherwise `CartesianIndex` should be used.
+
+Then the following methods should be defined
+- [`histogram_size`](@ref): the dimensions of the histogram.
+- [`system_size`](@ref): the size of the system.
+- [`initialise_state`](@ref): Optional initialisation step.
+- [`random_trial!`](@ref): Obtain a trial move for a new state.
+- [`hist_index`](@ref): Obtain the histogram index for the new state
+- [`commit_trial!`](@ref): Upon acceptance of the trial move, update the
+  state, optionally according to the indices.
+- [`revert_trial!`](@ref): Upon rejection of the trial move, update the
+  state, optionally according to the indices. By default returns `state`
 
 ## References
 - Original paper: [Wang & Landau, *PRL* 2001](https://link.aps.org/doi/10.1103/PhysRevLett.86.2050)
