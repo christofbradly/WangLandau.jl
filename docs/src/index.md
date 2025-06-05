@@ -64,7 +64,7 @@ Then the following methods should be defined
 - [`system_size`](@ref): the size of the system.
 - [`initialise_state`](@ref): Optional initialisation step.
 - [`random_trial!`](@ref): Obtain a trial move for a new state.
-- [`hist_index`](@ref): Obtain the histogram index for the new state
+- [`histogram_index`](@ref): Obtain the histogram index for the new state
 - [`commit_trial!`](@ref): Upon acceptance of the trial move, update the
   state, optionally according to the indices.
 - [`revert_trial!`](@ref): Upon rejection of the trial move, update the

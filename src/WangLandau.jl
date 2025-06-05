@@ -27,7 +27,7 @@ export DosIncrementStrategy, ReduceByFactor
 export FlatHistogramStrategy, FractionOfMean, StableNumVisits
 
 export initialise_state, histogram_size, system_size
-export random_trial!, hist_index, commit_trial!, revert_trial!
+export random_trial!, histogram_index, commit_trial!, revert_trial!
 
 include("strategies/f_increment.jl")
 include("strategies/flatness.jl")

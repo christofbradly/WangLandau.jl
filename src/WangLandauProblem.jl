@@ -45,14 +45,14 @@ See also [`commit_trial!`](@ref), [`revert_trial!`](@ref).
 function random_trial! end
 
 """
-    hist_index(state::S, statedefn::D, trial::T, old_index::I) -> new_index::I
+    histogram_index(state::S, statedefn::D, trial::T, old_index::I) -> new_index::I
 
 Calculate the `new_index` for accessing the density of states, using
 `statedefn`, `trial` or `old_index`, if necessary.
 
 See also [`random_trial`](@ref).
 """
-function hist_index end
+function histogram_index end
 
 """
     commit_trial!(state::S, statedefn::D, trial::T, old_index::I, new_index::I)
