@@ -25,7 +25,7 @@ makedocs(;
     # doctest=false, # Doctests are done while testing.
 )
 
-deploydocs(;
-    repo="github.com/christofbradly/WangLandau.jl",
-    devbranch="main",
+deploydocs(
+    repo="github.com/christofbradly/WangLandau.jl";
+    push_preview = true
 )
