@@ -17,7 +17,7 @@ makedocs(;
         "Example: 2D Ising model" => "ising.md",
         "Advanced usage" => "advanced.md",
         "API" => "api.md"
-    ],
+    ]
     # checkdocs=:exports,
     # doctest=false, # Doctests are done while testing.
 )
