@@ -1,20 +1,17 @@
 using WangLandau
 using Documenter
 
-DocMeta.setdocmeta!(WangLandau, :DocTestSetup, :(using WangLandau); recursive=true)
-
 makedocs(;
     modules=[WangLandau],
     authors="Chris Bradly",
     sitename="WangLandau.jl",
-    remotes=nothing,
-    format=Documenter.HTML(;
-        canonical="https://christofbradly.github.io/WangLandau.jl",
-        edit_link="main",
-        assets=String[],
-        size_threshold=500_000, # 500 kB
-        size_threshold_warn=200_000, # 200 kB
-    ),
+    # format=Documenter.HTML(;
+    #     canonical="https://christofbradly.github.io/WangLandau.jl",
+    #     edit_link="main",
+    #     assets=String[],
+    #     size_threshold=500_000, # 500 kB
+    #     size_threshold_warn=200_000, # 200 kB
+    # ),
     pages=[
         "Home" => "index.md",
         "Example: 2D Ising model" => "ising.md",
@@ -26,6 +23,5 @@ makedocs(;
 )
 
 deploydocs(
-    repo="github.com/christofbradly/WangLandau.jl";
-    push_preview = true
+    repo="github.com/christofbradly/WangLandau.jl"
 )
