@@ -16,17 +16,17 @@ TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 TerminalLoggers = "5d786b92-1e48-4d6f-9151-6b4477ca9bed"
 
 [compat]
-Atomix = "1.0.1"
+Atomix = "1.1.2"
 CommonSolve = "0.2.4"
 Logging = "1.11.0"
-Plots = "1.41.0"
+Plots = "1.41.1"
 Printf = "1.11.0"
-ProgressLogging = "0.1.4"
+ProgressLogging = "0.1.5"
 Random = "1.11.0"
-StaticArrays = "1.9.10"
+StaticArrays = "1.9.15"
 TOML = "1.0.3"
 TerminalLoggers = "0.1.7"
-julia = "1.10"
+julia = "1.11.7"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
