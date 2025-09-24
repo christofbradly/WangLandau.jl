@@ -50,7 +50,7 @@ function random_trial! end
 Calculate the `new_index` for accessing the density of states, using
 `statedefn`, `trial` or `old_index`, if necessary.
 
-See also [`random_trial`](@ref).
+See also [`random_trial!`](@ref).
 """
 function histogram_index end
 
