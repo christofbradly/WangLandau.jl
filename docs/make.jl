@@ -24,5 +24,7 @@ makedocs(;
 
 deploydocs(
     repo="github.com/christofbradly/WangLandau.jl",
-    push_preview = true
+    devbranch="main", 
+    push_preview = true,
+        versions=["stable" => "v^", "dev" => "main"], 
 )
