@@ -7,7 +7,7 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
 @testset "WangLandauProblem" begin
     Random.seed!(12345)
 
-    # Define problem
+    # Define Problem
     L = 5
     periodic = false
     statedefn = Ising2D(L; periodic)
