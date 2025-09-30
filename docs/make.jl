@@ -26,5 +26,5 @@ deploydocs(
     repo="github.com/christofbradly/WangLandau.jl",
     devbranch="main", 
     push_preview = true,
-        versions=["stable" => "v^", "dev" => "main"], 
+    versions=["stable" => "v^", "dev" => "main"], 
 )
