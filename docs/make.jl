@@ -1,13 +1,10 @@
 using WangLandau
 using Documenter
 
-DocMeta.setdocmeta!(WangLandau, :DocTestSetup, :(using WangLandau); recursive=true)
-
 makedocs(;
     modules=[WangLandau],
     authors="Chris Bradly",
     sitename="WangLandau.jl",
-    remotes=nothing,
     format=Documenter.HTML(;
         canonical="https://christofbradly.github.io/WangLandau.jl",
         edit_link="main",
@@ -20,12 +17,14 @@ makedocs(;
         "Example: 2D Ising model" => "ising.md",
         "Advanced usage" => "advanced.md",
         "API" => "api.md"
-    ],
+    ]
     # checkdocs=:exports,
     # doctest=false, # Doctests are done while testing.
 )
 
-deploydocs(;
+deploydocs(
     repo="github.com/christofbradly/WangLandau.jl",
-    devbranch="main",
+    devbranch="main", 
+    push_preview = true,
+    versions=["stable" => "v^", "dev" => "main"], 
 )
