@@ -1,0 +1,38 @@
+name: Benchmark
+on:
+  pull_request:
+    branches-ignore:
+    - 'doc/**'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: 1
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Install dependencies
+        run: julia -e 'using Pkg; pkg"add PkgBenchmark BenchmarkTools BenchmarkCI@0.1"'
+      - name: Run benchmarks
+        run: julia -e 'using BenchmarkCI; BenchmarkCI.judge(baseline="origin/develop"); BenchmarkCI.displayjudgement()'
+
+      # generate result markdown
+      - name: generate benchmark result
+        id: generate-result-markdown
+        run: |
+          body=$(julia -tauto -e '
+          using BenchmarkCI
+          let
+              judgement = BenchmarkCI._loadjudge(BenchmarkCI.DEFAULT_WORKSPACE)
+              title = "Benchmark result"
+              ciresult = BenchmarkCI.CIResult(; judgement, title)
+              BenchmarkCI.printcommentmd(stdout::IO, ciresult)
+          end
+          ')
+          body="${body//'%'/'%25'}"
+          body="${body//$'\n'/'%0A'}"
+          body="${body//$'\r'/'%0D'}"
+          echo ::set-output name=body::$body
