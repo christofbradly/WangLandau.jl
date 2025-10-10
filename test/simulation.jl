@@ -32,6 +32,7 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
 
     io = IOBuffer()
     show(io, sim)
+    out = String(take!(io))
     @test occursin("WangLandauSimulation", out)
     @test occursin("log(f)", out)
     @test occursin("iterations", out)
