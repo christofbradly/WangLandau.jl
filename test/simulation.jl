@@ -16,7 +16,7 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     @test isa(sim, WangLandau.WangLandauSimulation)
     @test isa(sim.logf_strategy, WangLandau.ReduceByFactor)
     @test isa(sim.flat_strategy, WangLandau.FractionOfMean)           
-    @test isa(sim.catchup_strategy, WangLandau.NoCatchup())    
+    @test isa(sim.catchup_strategy, WangLandau.NoCatchup)    
 
     sim_steps = WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
     @test sim_steps.max_total_steps > 1
@@ -31,7 +31,7 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     @test_throws ArgumentError WangLandau.WangLandauSimulation(statedefn; tasks_per_thread = -1)
 
     io = IOBuffer()
-    show(io, sim_default)
+    show(io, sim)
     @test occursin("WangLandauSimulation", out)
     @test occursin("log(f)", out)
     @test occursin("iterations", out)
