@@ -1,6 +1,7 @@
 using WangLandau
 using Test
 using Random
+using CommonSolve
 
 include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
 
@@ -12,26 +13,30 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     statedefn = Ising2D(L; periodic)
 
     sim = WangLandauProblem(statedefn)
-    @test isa(sim, WangLandauSimulation)
+    @test isa(sim, WangLandau.WangLandauSimulation)
     @test isa(sim.logf_strategy, WangLandau.ReduceByFactor)
     @test isa(sim.flat_strategy, WangLandau.FractionOfMean)           
     @test isa(sim.catchup_strategy, WangLandau.NoCatchup())    
 
-    sim_steps = WangLandauSimulation(statedefn; max_total_steps = 1)
+    sim_steps = WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
     @test sim_steps.max_total_steps > 1
        
-    sim_logf = WangLandauSimulation(statedefn; final_logf = 1e-3)
+    sim_logf = WangLandau.WangLandauSimulation(statedefn; final_logf = 1e-3)
     @test WangLandau.final_value(sim_logf.logf_strategy) == 1e-3
 
     fs = WangLandau.FractionOfMean(0.75)
-    sim_flat = WangLandauSimulation(statedefn; flat_strategy = fs)
+    sim_flat = WangLandau.WangLandauSimulation(statedefn; flat_strategy = fs)
     @test sim_flat.flat_strategy === fs
 
-    @test_throws ArgumentError WangLandauSimulation(statedefn; tasks_per_thread = -1)
+    @test_throws ArgumentError WangLandau.WangLandauSimulation(statedefn; tasks_per_thread = -1)
 
     io = IOBuffer()
     show(io, sim_default)
-    @test occursin("WangLandauSimulation", String(take!(io)))
+    @test occursin("WangLandauSimulation", out)
+    @test occursin("log(f)", out)
+    @test occursin("iterations", out)
+    @test occursin("total steps", out)
+    @test occursin("elapsed time", out)
 end    
 
 @testset "CommonSolve" begin
@@ -43,7 +48,7 @@ end
     prob = WangLandauProblem(statedefn)
 
     sim = CommonSolve.init(prob; check_sweeps = 10, final_logf = 1e-3)
-    @test isa(sim, WangLandau.WangLandauSimulation)
+    @test isa(sim, WangLandau.WangLandau.WangLandauSimulation)
     @test sim.check_steps == 10 * WangLandau.system_size(statedefn)
 
     state, old_index = initialise_state(statedefn)
@@ -68,7 +73,7 @@ end
 
     sim_short = CommonSolve.init(prob; check_sweeps = 5, final_logf = 1e-2, max_total_steps = 200)
     sim_done = CommonSolve.solve!(sim_short)
-    @test isa(sim_done, WangLandau.WangLandauSimulation)
+    @test isa(sim_done, WangLandau.WangLandau.WangLandauSimulation)
     @test sim_done.total_steps > 0
     @test sim_done.elapsed_time ≥ 0.0
 end
