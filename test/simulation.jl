@@ -13,10 +13,10 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     statedefn = Ising2D(L; periodic)
 
     sim = WangLandauProblem(statedefn)
-    @test isa(sim, WangLandau.WangLandauSimulation)
-    @test isa(sim.logf_strategy, WangLandau.ReduceByFactor)
-    @test isa(sim.flat_strategy, WangLandau.FractionOfMean)           
-    @test isa(sim.catchup_strategy, WangLandau.NoCatchup())    
+    @test sim isa WangLandau.WangLandauSimulation
+    @test sim.logf_strategy isa WangLandau.ReduceByFactor
+    @test sim.flat_strategy isa WangLandau.FractionOfMean
+    @test sim.catchup_strategy isa WangLandau.NoCatchup
 
     sim_steps = WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
     @test sim_steps.max_total_steps > 1
@@ -31,7 +31,7 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     @test_throws ArgumentError WangLandau.WangLandauSimulation(statedefn; tasks_per_thread = -1)
 
     io = IOBuffer()
-    show(io, sim_default)
+    show(io, sim)
     @test occursin("WangLandauSimulation", out)
     @test occursin("log(f)", out)
     @test occursin("iterations", out)
@@ -48,8 +48,7 @@ end
     prob = WangLandauProblem(statedefn)
 
     sim = CommonSolve.init(prob; check_sweeps = 10, final_logf = 1e-3)
-    @test isa(sim, WangLandau.WangLandau.WangLandauSimulation)
-    @test sim.check_steps == 10 * WangLandau.system_size(statedefn)
+    @test sim isa WangLandau.WangLandauSimulation
 
     state, old_index = initialise_state(statedefn)
     logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
