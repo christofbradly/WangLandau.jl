@@ -2,37 +2,64 @@ name: Benchmark
 on:
   pull_request:
     branches-ignore:
-    - 'doc/**'
+      - 'doc/**'
 
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
       - uses: julia-actions/setup-julia@v2
         with:
-          version: 1
+          version: '1'
+
       - uses: julia-actions/cache@v2
+
       - uses: julia-actions/julia-buildpkg@v1
+
       - name: Install dependencies
-        run: julia -e 'using Pkg; pkg"add PkgBenchmark BenchmarkTools BenchmarkCI@0.1"'
+        run: julia -e 'using Pkg; Pkg.add(["PkgBenchmark", "BenchmarkTools", "BenchmarkCI@0.1"])'
+
       - name: Run benchmarks
         run: julia -e 'using BenchmarkCI; BenchmarkCI.judge(baseline="origin/develop"); BenchmarkCI.displayjudgement()'
 
-      # generate result markdown
-      - name: generate benchmark result
+      - name: Generate benchmark result
         id: generate-result-markdown
         run: |
-          body=$(julia -tauto -e '
+          body=$(julia --color=yes -e '
           using BenchmarkCI
           let
               judgement = BenchmarkCI._loadjudge(BenchmarkCI.DEFAULT_WORKSPACE)
               title = "Benchmark result"
               ciresult = BenchmarkCI.CIResult(; judgement, title)
-              BenchmarkCI.printcommentmd(stdout::IO, ciresult)
+              BenchmarkCI.printcommentmd(stdout, ciresult)
           end
           ')
+          # Escape characters for GitHub output
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}"
-          echo ::set-output name=body::$body
+          echo "body=$body" >> $GITHUB_OUTPUT
+
+      - name: Find existing comment
+        id: fc
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Benchmark result
+
+      - name: Create comment
+        if: ${{ steps.fc.outputs.comment-id == 0 && github.actor != 'dependabot[bot]' }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.generate-result-markdown.outputs.body }}
+
+      - name: Update comment
+        if: ${{ steps.fc.outputs.comment-id != 0 && github.actor != 'dependabot[bot]' }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          body: ${{ steps.generate-result-markdown.outputs.body }}
