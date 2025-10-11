@@ -1,65 +1,22 @@
 name: Benchmark
 on:
   pull_request:
-    branches-ignore:
-      - 'doc/**'
+    branches:
+      - main
 
 jobs:
-  run:
+  bench:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1.11'
-
-      - uses: julia-actions/cache@v2
-
-      - uses: julia-actions/julia-buildpkg@v1
-
       - name: Install dependencies
-        run: julia -e 'using Pkg; Pkg.add(["PkgBenchmark", "BenchmarkTools", "BenchmarkCI"])'
-
-      - name: Run benchmarks
-        run: julia -e 'using BenchmarkCI; BenchmarkCI.judge(baseline="origin/main"); BenchmarkCI.displayjudgement()'
-
-      - name: Generate benchmark result
-        id: generate-result-markdown
-        run: |
-          body=$(julia --color=yes -e '
-          using BenchmarkCI
-          let
-              judgement = BenchmarkCI._loadjudge(BenchmarkCI.DEFAULT_WORKSPACE)
-              title = "Benchmark result"
-              ciresult = BenchmarkCI.CIResult(; judgement, title)
-              BenchmarkCI.printcommentmd(stdout::IO, ciresult)
-          end
-          ')
-          # Escape characters for GitHub output
-          body="${body//'%'/'%25'}"
-          body="${body//$'\n'/'%0A'}"
-          body="${body//$'\r'/'%0D'}"
-          echo ::set-output name=body::$body
-
-      - name: Find existing comment
-        id: fc
-        uses: peter-evans/find-comment@v3
+        run: julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
+      - name: Run AirspeedVelocity
+        uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: Benchmark result
-
-      - name: Create comment
-        if: ${{ steps.fc.outputs.comment-id == 0 && github.actor != 'dependabot[bot]' }}
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.generate-result-markdown.outputs.body }}
-
-      - name: Update comment
-        if: ${{ steps.fc.outputs.comment-id != 0 && github.actor != 'dependabot[bot]' }}
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          body: ${{ steps.generate-result-markdown.outputs.body }}
+          julia-version: "1.11"
+          job-summary: "true"
+          enable-plots: "true"
