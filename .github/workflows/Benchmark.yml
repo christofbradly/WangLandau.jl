@@ -37,14 +37,14 @@ jobs:
               judgement = BenchmarkCI._loadjudge(BenchmarkCI.DEFAULT_WORKSPACE)
               title = "Benchmark result"
               ciresult = BenchmarkCI.CIResult(; judgement, title)
-              BenchmarkCI.printcommentmd(stdout, ciresult)
+              BenchmarkCI.printcommentmd(stdout::IO, ciresult)
           end
           ')
           # Escape characters for GitHub output
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}"
-          echo "body=$body" >> $GITHUB_OUTPUT
+          echo ::set-output name=body::$body
 
       - name: Find existing comment
         id: fc
