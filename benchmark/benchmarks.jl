@@ -5,7 +5,7 @@ using BenchmarkTools
 include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
 
 function make_sim(L::Int; kwargs...)
-    statedefn = WangLandau.Ising2D(L)
+    statedefn = Ising2D(L)
     problem = WangLandau.WangLandauProblem(statedefn)
     sim = CommonSolve.init(problem; kwargs...)
     return sim
