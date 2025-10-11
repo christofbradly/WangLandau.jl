@@ -13,7 +13,7 @@ jobs:
         with:
           version: '1.11'
       - name: Install dependencies
-        run: julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
+        run: julia -e 'using AirspeedVelocity; AirspeedVelocity.main(["--rev=dirty", "--path=.", "--script=benchmark/benchmarks.jl", "--output-dir=.airspeedvelocity"])'
       - name: Run AirspeedVelocity
         uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:
