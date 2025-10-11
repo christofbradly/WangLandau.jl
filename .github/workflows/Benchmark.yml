@@ -23,13 +23,11 @@ jobs:
       - name: Install dependencies
         run: julia -e 'using Pkg; Pkg.add(["PkgBenchmark", "BenchmarkTools", "BenchmarkCI"])'
 
-      - name: Run benchmarks
-        working-directory: WangLandau.jl
+      - name: Run benchmarkss
         run: julia -e 'using BenchmarkCI; BenchmarkCI.judge(baseline="origin/main"); BenchmarkCI.displayjudgement()'
 
       - name: Generate benchmark result
         id: generate-result-markdown
-        working-directory: WangLandau.jl
         run: |
           body=$(julia --color=yes -e '
           using BenchmarkCI
