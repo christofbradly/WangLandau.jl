@@ -12,7 +12,7 @@ function make_sim(L::Int; kwargs...)
 end
 
 const SUITE = @benchmarkset "WangLandau" begin
-    @benchmarkset "Small " begin
+    @benchmarkset "Steps" begin
         @case "L=8" begin
             sim = make_sim(8; check_steps=5_000, max_total_steps=50_000)
             CommonSolve.solve!(sim)
@@ -25,13 +25,25 @@ const SUITE = @benchmarkset "WangLandau" begin
     end
 
     @benchmarkset "Scaling" begin
-        for L in (8, 16, 24, 32)
-            @case "L=$L" begin
-                local L_ = $L
-                sim = make_sim(L; check_steps=10_000, max_total_steps=100_000)
-                CommonSolve.solve!(sim)
-            end seconds=10
-        end
+        @case "L=8" begin
+            sim = make_sim(8; check_steps=10_000, max_total_steps=100_000)
+            CommonSolve.solve!(sim)
+        end seconds=10
+
+        @case "L=16" begin
+            sim = make_sim(16; check_steps=10_000, max_total_steps=100_000)
+            CommonSolve.solve!(sim)
+        end seconds=10
+
+        @case "L=24" begin
+            sim = make_sim(24; check_steps=10_000, max_total_steps=100_000)
+            CommonSolve.solve!(sim)
+        end seconds=10
+
+        @case "L=32" begin
+            sim = make_sim(32; check_steps=10_000, max_total_steps=100_000)
+            CommonSolve.solve!(sim)
+        end seconds=10
     end
 
     @benchmarkset "Threading" begin
