@@ -27,6 +27,7 @@ const SUITE = @benchmarkset "WangLandau" begin
     @benchmarkset "Scaling" begin
         for L in (8, 16, 24, 32)
             @case "L=$L" begin
+                local L_ = $L
                 sim = make_sim(L; check_steps=10_000, max_total_steps=100_000)
                 CommonSolve.solve!(sim)
             end seconds=10
