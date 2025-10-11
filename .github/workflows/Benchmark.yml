@@ -24,7 +24,7 @@ jobs:
         run: julia -e 'using Pkg; Pkg.add(["PkgBenchmark", "BenchmarkTools", "BenchmarkCI"])'
 
       - name: Run benchmarks
-        run: julia -e 'using BenchmarkCI; BenchmarkCI.judge(baseline="origin/main"); BenchmarkCI.displayjudgement()'
+        run: julia -e 'using Pkg; Pkg.add(["PkgBenchmark", "BenchmarkTools"]); Pkg.add(url="https://github.com/JuliaCI/BenchmarkCI.jl")'
 
       - name: Generate benchmark result
         id: generate-result-markdown
