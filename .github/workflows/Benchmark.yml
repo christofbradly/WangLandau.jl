@@ -9,8 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
       - uses: julia-actions/setup-julia@v2
         with:
@@ -23,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: julia -e 'using Pkg; Pkg.add(["PkgBenchmark", "BenchmarkTools", "BenchmarkCI"])'
 
-      - name: Run benchmarkss
+      - name: Run benchmarks
         run: julia -e 'using BenchmarkCI; BenchmarkCI.judge(baseline="origin/main"); BenchmarkCI.displayjudgement()'
 
       - name: Generate benchmark result
