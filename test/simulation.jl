@@ -141,7 +141,7 @@ end
     CommonSolve.step!(sim_fixed, hist3, task_samples1, chunk_size1)
     @test sim_fixed.flat_checks ≥ 1
 
-    hist4 = zeros(Int, size(sim_dynamic.samples))
+    hist4 = zeros(Int, length(sim_dynamic.samples))
     task_samples2 = zeros(Int, max(1, sim_dynamic.tasks_per_thread * Threads.nthreads()))
     chunk_size2 = max(1, sim_dynamic.check_steps ÷ length(task_samples2))
     CommonSolve.step!(sim_dynamic, hist4, task_samples2, chunk_size2)
