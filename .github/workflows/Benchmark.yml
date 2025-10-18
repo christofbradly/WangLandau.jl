@@ -55,16 +55,11 @@ jobs:
           git fetch --tags
           latest=$(git tag -l --sort=-v:refname | head -n1)
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
-  
+
       - name: Download all benchmark artifacts
         uses: actions/download-artifact@v4
         with:
           path: results/
-
-      - name: Combine results into one ASV directory
-        run: |
-          mkdir -p .asv/results
-          find results -type f -name "*.json" -exec cp {} .asv/results/ \;
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v2
@@ -76,26 +71,30 @@ jobs:
           julia -e 'using Pkg; Pkg.add("AirspeedVelocity"); using AirspeedVelocity; Pkg.build("AirspeedVelocity")'
           echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
 
-      - name: Create comment body
+      - name: Create combined benchmark comment
         id: comment
         shell: bash
         run: |
           echo "## Benchmark Results" > body.md
           echo "" >> body.md
 
-          threads=$(find results -maxdepth 1 -type d -name 'bench-*' | sed 's/.*-//' | sort -n)
+          threads=$(find results -maxdepth 1 -type d -name 'bench-*' | awk -F'-' '{print $NF}' | sort -n | uniq)
 
           for t in $threads; do
             echo "<details><summary>🧵 ${t} Threads</summary>" >> body.md
             echo "" >> body.md
+            
+            rm -rf .asv/results
+            mkdir -p .asv/results
+
+            find results -type f -path "*-${t}/*" -name "*.json" -exec cp {} .asv/results/ \;
 
             for mode in time memory; do
               echo "#### ${mode^} benchmarks" >> body.md
               benchpkgtable $(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml) \
                 --input-dir=.asv/results \
                 --mode=$mode \
-                --rev=${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }} \
-                --filter "threads=$t" >> body.md
+                --rev=${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }} >> body.md
               echo "" >> body.md
             done
 
