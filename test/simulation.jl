@@ -78,3 +78,72 @@ end
     @test sim_done.total_steps > 0
     @test sim_done.elapsed_time ≥ 0.0
 end
+
+@testset "CatchupStrategy" begin
+    using Random
+    Random.seed!(1234)
+
+    L = 4
+    statedefn = Ising2D(L; periodic=false)
+
+    # FixedFractionalCatchup 
+    ffc = WangLandau.FixedFractionalCatchup(0.5)
+    @test WangLandau.catchup_enabled(ffc)
+    sim = WangLandau.WangLandauSimulation(statedefn)
+
+    sim.logdos .= [0.0, 1.0, 2.0]
+    WangLandau.update!(ffc, sim)
+    @test ffc.minval == 1.0
+    @test WangLandau.catchup_value(ffc) == 0.5
+    @test ffc isa WangLandau.FixedFractionalCatchup{true}
+
+    # DynamicFractionalCatchup
+    dfc = WangLandau.DynamicFractionalCatchup()
+    @test WangLandau.catchup_enabled(dfc)
+
+    sim2 = WangLandau.WangLandauSimulation(statedefn)
+    sim2.logdos .= [0.0, 2.0, 3.0]
+    WangLandau.update!(dfc, sim2)
+    @test dfc.value ≥ 0.0
+    @test WangLandau.catchup_value(dfc) == dfc.value
+
+    # FFC trial
+    state, idx = initialise_state(statedefn)
+    logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
+    hist = zeros(Int, WangLandau.histogram_size(statedefn))
+    logf = 0.1
+
+    new_idx = WangLandau.wl_trial!(state, idx, statedefn, logdos, hist, logf, ffc)
+    @test 1 ≤ new_idx ≤ length(hist)
+    @test any(logdos .> 0)
+    @test any(hist .> 0)
+
+    # DFC trial
+    state, idx = initialise_state(statedefn)
+    logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
+    hist2 = zeros(Int, WangLandau.histogram_size(statedefn))
+    logf = 0.1
+
+    new_idx = WangLandau.wl_trial!(state, idx, statedefn, logdos, hist2, logf, dfc)
+    @test 1 ≤ new_idx ≤ length(hist)
+    @test any(logdos .> 0)
+    @test any(hist .> 0)
+
+    sim_fixed = WangLandau.WangLandauSimulation(statedefn; catchup_strategy = ffc)
+    @test sim_fixed.catchup_strategy === ffc
+
+    sim_dynamic = WangLandau.WangLandauSimulation(statedefn; catchup_strategy = dfc)
+    @test sim_dynamic.catchup_strategy === dfc
+
+    hist3 = zeros(Int, size(sim_fixed.samples))
+    task_samples1 = zeros(Int, max(1, sim_fixed.tasks_per_thread * Threads.nthreads()))
+    chunk_size1 = max(1, sim_fixed.check_steps ÷ length(task_samples1))
+    CommonSolve.step!(sim_fixed, hist3, task_samples1, chunk_size1)
+    @test sim_fixed.flat_checks ≥ 1
+
+    hist4 = zeros(Int, size(sim_dynamic.samples))
+    task_samples2 = zeros(Int, max(1, sim_dynamic.tasks_per_thread * Threads.nthreads()))
+    chunk_size2 = max(1, sim_dynamic.check_steps ÷ length(task_samples2))
+    CommonSolve.step!(sim_dynamic, hist4, task_samples2, chunkchunk_size2_size)
+    @test sim_dynamic.flat_checks ≥ 1
+end

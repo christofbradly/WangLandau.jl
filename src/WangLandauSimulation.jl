@@ -62,7 +62,9 @@ function WangLandauSimulation(statedefn::D;
         max_total_steps = expected_iterations(logf_strategy) * check_steps
     end
     tasks_per_thread ≥ 0 || throw(ArgumentError("Task multiplier must be non-negative."))
-    I, F, C = typeof.((logf_strategy, flat_strategy, catchup_strategy))
+    I = typeof(logf_strategy)
+    F = typeof(flat_strategy)
+    C = typeof(catchup_strategy)
 
     return WangLandauSimulation{D,N,I,F,C}(
         statedefn,
