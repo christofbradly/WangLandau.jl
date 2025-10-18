@@ -41,3 +41,42 @@ jobs:
           julia-version: "1.11"
           rev: "${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }}"
           bench-on: ${{ github.event.pull_request.head.sha }}
+          job-summary: 'true'
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ matrix.julia-version }}-${{ matrix.threads }}
+          path: .asv/results/    
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ matrix.julia-version }}-${{ matrix.threads }}
+          path: .asv/results/    
+
+  summarize:
+    runs-on: ubuntu-latest
+    needs: bench
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: results/
+
+      - name: Combine results into one ASV directory
+        run: |
+          mkdir -p .asv/results
+          find merged_results -type f -name "*.json" -exec cp {} .asv/results/ \;
+
+      - name: Post combined PR benchmark summary
+        uses: MilesCranmer/AirspeedVelocity.jl@action-v1
+        with:
+          asv-version: "0.6"
+          julia-version: "1.11"
+          job-summary: "false"
+          mode: "time,memory"
