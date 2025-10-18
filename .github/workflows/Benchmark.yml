@@ -11,11 +11,9 @@ jobs:
   bench:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: julia-actions/setup-julia@v2
+      - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:
-          version: '1.11'
-
-      - name: Run AirspeedVelocity.jl benchmarks
-        uses: MilesCranmer/AirspeedVelocity.jl@action-v1
+          julia-version: "1.11"
+          # tune: "true"
+          job-summary: "true"
+          bench-on: ${{ github.event.pull_request.head.sha }}
