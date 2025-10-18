@@ -49,12 +49,6 @@ jobs:
           name: bench-${{ matrix.julia-version }}-${{ matrix.threads }}
           path: .asv/results/    
 
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
-        with:
-          name: bench-${{ matrix.julia-version }}-${{ matrix.threads }}
-          path: .asv/results/    
-
   summarize:
     runs-on: ubuntu-latest
     needs: bench
@@ -71,7 +65,7 @@ jobs:
       - name: Combine results into one ASV directory
         run: |
           mkdir -p .asv/results
-          find merged_results -type f -name "*.json" -exec cp {} .asv/results/ \;
+          find results  -type f -name "*.json" -exec cp {} .asv/results/ \;
 
       - name: Post combined PR benchmark summary
         uses: MilesCranmer/AirspeedVelocity.jl@action-v1
