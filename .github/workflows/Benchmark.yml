@@ -7,13 +7,17 @@ on:
 
 permissions:
   pull-requests: write
-  issues: write
 
 jobs:
   bench:
     runs-on: ubuntu-latest
     outputs:
       latest_tag: ${{ steps.get_tag.outputs.latest }}
+    strategy:
+      matrix:
+        julia-version: ["1.11"]
+        threads: [1, 2, 4, 8]
+      fail-fast: false  
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,8 +32,11 @@ jobs:
           echo "latest tag: $latest"
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
 
-      - name: Run AirspeedVelocity benchmark
+      - name: Run benchmark (${{ matrix.julia-version }} | ${{
+          matrix.threads }} threads)
         uses: MilesCranmer/AirspeedVelocity.jl@action-v1
+        env:
+          JULIA_NUM_THREADS: ${{ matrix.threads }}
         with:
           julia-version: "1.11"
           rev: "${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }}"
