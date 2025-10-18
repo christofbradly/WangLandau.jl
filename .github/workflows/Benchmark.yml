@@ -67,19 +67,19 @@ jobs:
       - name: Install AirspeedVelocity
         run: |
           julia -e 'using Pkg; Pkg.add("AirspeedVelocity"); using AirspeedVelocity; Pkg.build("AirspeedVelocity")'
-          mkdir -p ~/.julia/bin
-          julia -e '
-            using Pkg
-            asv_path = joinpath(dirname(Pkg.pathof(Pkg)), "..", "AirspeedVelocity", "deps")
-            bin_dir = joinpath(homedir(), ".julia", "bin")
-            for tool in ["benchpkg", "benchpkgtable", "benchpkgplot"]
-                src = joinpath(asv_path, tool)
-                dest = joinpath(bin_dir, tool)
-                if isfile(src)
-                    run(`cp $src $dest`)
-                end
-            end
-          '
+          # mkdir -p ~/.julia/bin
+          # julia -e '
+          #   using Pkg
+          #   asv_path = joinpath(dirname(Pkg.pathof(Pkg)), "..", "AirspeedVelocity", "deps")
+          #   bin_dir = joinpath(homedir(), ".julia", "bin")
+          #   for tool in ["benchpkg", "benchpkgtable", "benchpkgplot"]
+          #       src = joinpath(asv_path, tool)
+          #       dest = joinpath(bin_dir, tool)
+          #       if isfile(src)
+          #           run(`cp $src $dest`)
+          #       end
+          #   end
+          # '
           echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
 
       - name: Create comment body
@@ -97,7 +97,6 @@ jobs:
               benchpkgtable $(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml) \
                 --input-dir=.asv/results \
                 --mode=$mode \
-                --ratio \
                 --rev=${{ github.event.repository.default_branch }},${{ github.event.pull_request.head.sha }}
               echo ""
               echo "</details>"
