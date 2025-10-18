@@ -55,7 +55,7 @@ jobs:
           git fetch --tags
           latest=$(git tag -l --sort=-v:refname | head -n1)
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
-  s
+  
       - name: Download all benchmark artifacts
         uses: actions/download-artifact@v4
         with:
