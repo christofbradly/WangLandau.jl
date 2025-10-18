@@ -1,18 +1,35 @@
 name: Benchmark
+
 on:
   pull_request:
     branches:
       - main
-      
+
 permissions:
   pull-requests: write
 
 jobs:
   bench:
     runs-on: ubuntu-latest
+    outputs:
+      latest_tag: ${{ steps.get_tag.outputs.latest }}
     steps:
-      - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          latest=$(git tag -l --sort=-v:refname | head -n1)
+          echo "latest tag: $latest"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+
+      - name: Run AirspeedVelocity benchmark
+        uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:
           julia-version: "1.11"
-          rev: "latest,${{ github.event.pull_request.head.sha }}"
+          rev: "${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }}"
           bench-on: ${{ github.event.pull_request.head.sha }}
