@@ -66,8 +66,21 @@ jobs:
 
       - name: Install AirspeedVelocity
         run: |
-          julia -e 'using Pkg; Pkg.add("AirspeedVelocity"); using AirspeedVelocity; install_cli()'
-          echo "$HOME/.julia/bin" >> $GITHUB_PATH
+          julia -e 'using Pkg; Pkg.add("AirspeedVelocity"); using AirspeedVelocity; Pkg.build("AirspeedVelocity")'
+          mkdir -p ~/.julia/bin
+          julia -e '
+            using Pkg
+            asv_path = joinpath(dirname(Pkg.pathof(Pkg)), "..", "AirspeedVelocity", "deps")
+            bin_dir = joinpath(homedir(), ".julia", "bin")
+            for tool in ["benchpkg", "benchpkgtable", "benchpkgplot"]
+                src = joinpath(asv_path, tool)
+                dest = joinpath(bin_dir, tool)
+                if isfile(src)
+                    run(`cp $src $dest`)
+                end
+            end
+          '
+          echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
 
       - name: Create comment body
         id: comment
