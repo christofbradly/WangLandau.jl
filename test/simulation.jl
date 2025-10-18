@@ -144,6 +144,6 @@ end
     hist4 = zeros(Int, size(sim_dynamic.samples))
     task_samples2 = zeros(Int, max(1, sim_dynamic.tasks_per_thread * Threads.nthreads()))
     chunk_size2 = max(1, sim_dynamic.check_steps ÷ length(task_samples2))
-    CommonSolve.step!(sim_dynamic, hist4, task_samples2, chunkchunk_size2_size)
+    CommonSolve.step!(sim_dynamic, hist4, task_samples2, chunk_size2)
     @test sim_dynamic.flat_checks ≥ 1
 end
