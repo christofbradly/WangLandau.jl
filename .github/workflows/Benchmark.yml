@@ -14,6 +14,4 @@ jobs:
       - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:
           julia-version: "1.11"
-          # tune: "true"
-          job-summary: "true"
           bench-on: ${{ github.event.pull_request.head.sha }}

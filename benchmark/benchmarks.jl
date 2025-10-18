@@ -14,19 +14,19 @@ const SUITE = @benchmarkset "WangLandau" begin
     @benchmarkset "Scaling" begin
        @case "L=8" begin
             make_sim(8; check_sweeps=500, final_logf=1e-3)
-        end seconds=10
+        end seconds=60
         @case "L=16" begin
             make_sim(16; check_sweeps=1_000, final_logf=1e-3)
-        end seconds=10
+        end seconds=60
     end
 
     @benchmarkset "Threading" begin
         @case "L=8, threads=$(Threads.nthreads())" begin
             make_sim(8; check_sweeps=1_000, final_logf=1e-3)
-        end seconds=10
+        end seconds=60
 
         @case "L=16, threads=$(Threads.nthreads())" begin
             make_sim(16; check_sweeps=1_000, final_logf=1e-3)
-        end seconds=10
+        end seconds=60
     end
 end
