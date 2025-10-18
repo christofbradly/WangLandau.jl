@@ -65,7 +65,9 @@ jobs:
           version: "1.11"
 
       - name: Install AirspeedVelocity
-        run: julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
+        run: |
+          julia -e 'using Pkg; Pkg.add("AirspeedVelocity"); using AirspeedVelocity; install_cli()'
+          echo "$HOME/.julia/bin" >> $GITHUB_PATH
 
       - name: Create comment body
         id: comment
