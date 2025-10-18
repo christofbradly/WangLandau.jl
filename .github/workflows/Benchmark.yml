@@ -74,19 +74,6 @@ jobs:
       - name: Install AirspeedVelocity
         run: |
           julia -e 'using Pkg; Pkg.add("AirspeedVelocity"); using AirspeedVelocity; Pkg.build("AirspeedVelocity")'
-          # mkdir -p ~/.julia/bin
-          # julia -e '
-          #   using Pkg
-          #   asv_path = joinpath(dirname(Pkg.pathof(Pkg)), "..", "AirspeedVelocity", "deps")
-          #   bin_dir = joinpath(homedir(), ".julia", "bin")
-          #   for tool in ["benchpkg", "benchpkgtable", "benchpkgplot"]
-          #       src = joinpath(asv_path, tool)
-          #       dest = joinpath(bin_dir, tool)
-          #       if isfile(src)
-          #           run(`cp $src $dest`)
-          #       end
-          #   end
-          # '
           echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
 
       - name: Create comment body
@@ -96,19 +83,24 @@ jobs:
           echo "## Benchmark Results" > body.md
           echo "" >> body.md
 
-          # For example, benchmark both time and memory
-          for mode in time memory; do
-            {
-              echo "<details><summary>${mode^} benchmarks</summary>"
-              echo ""
+          threads=$(find results -maxdepth 1 -type d -name 'bench-*' | sed 's/.*-//' | sort -n)
+
+          for t in $threads; do
+            echo "<details><summary>🧵 ${t} Threads</summary>" >> body.md
+            echo "" >> body.md
+
+            for mode in time memory; do
+              echo "#### ${mode^} benchmarks" >> body.md
               benchpkgtable $(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml) \
                 --input-dir=.asv/results \
                 --mode=$mode \
-                --rev=${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }}
-              echo ""
-              echo "</details>"
-              echo ""
-            } >> body.md
+                --rev=${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }} \
+                --filter "threads=$t" >> body.md
+              echo "" >> body.md
+            done
+
+            echo "</details>" >> body.md
+            echo "" >> body.md
           done
 
       - name: Find existing benchmark comment
