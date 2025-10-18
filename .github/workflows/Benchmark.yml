@@ -2,8 +2,7 @@ name: Benchmark
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   pull-requests: write
@@ -11,43 +10,36 @@ permissions:
 jobs:
   bench:
     runs-on: ubuntu-latest
-    outputs:
-      latest_tag: ${{ steps.get_tag.outputs.latest }}
     strategy:
       matrix:
         julia-version: ["1.11"]
         threads: [1, 2, 4, 8]
-      fail-fast: false  
+      fail-fast: false
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  
 
       - name: Get latest tag
         id: get_tag
         run: |
           git fetch --tags
           latest=$(git tag -l --sort=-v:refname | head -n1)
-          echo "latest tag: $latest"
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
 
-      - name: Run benchmark (${{ matrix.julia-version }} | ${{
-          matrix.threads }} threads)
+      - name: Run benchmark (${{ matrix.julia-version }} | ${{ matrix.threads }} threads)
         uses: MilesCranmer/AirspeedVelocity.jl@action-v1
-        env:
-          JULIA_NUM_THREADS: ${{ matrix.threads }}
         with:
-          julia-version: "1.11"
+          julia-version: ${{ matrix.julia-version }}
           rev: "${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }}"
           bench-on: ${{ github.event.pull_request.head.sha }}
           job-summary: 'true'
-      
+
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
           name: bench-${{ matrix.julia-version }}-${{ matrix.threads }}
-          path: results/  
+          path: results/
 
   summarize:
     runs-on: ubuntu-latest
@@ -65,12 +57,51 @@ jobs:
       - name: Combine results into one ASV directory
         run: |
           mkdir -p .asv/results
-          find results  -type f -name "*.json" -exec cp {} .asv/results/ \;
+          find results -type f -name "*.json" -exec cp {} .asv/results/ \;
 
-      - name: Post combined PR benchmark summary
-        uses: MilesCranmer/AirspeedVelocity.jl@action-v1
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
         with:
-          asv-version: "0.6"
-          julia-version: "1.11"
-          job-summary: "false"
-          mode: "time,memory"
+          version: "1.11"
+
+      - name: Install AirspeedVelocity
+        run: julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
+
+      - name: Create comment body
+        id: comment
+        shell: bash
+        run: |
+          echo "## Benchmark Results" > body.md
+          echo "" >> body.md
+
+          # For example, benchmark both time and memory
+          for mode in time memory; do
+            {
+              echo "<details><summary>${mode^} benchmarks</summary>"
+              echo ""
+              benchpkgtable $(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml) \
+                --input-dir=.asv/results \
+                --mode=$mode \
+                --ratio \
+                --rev=${{ github.event.repository.default_branch }},${{ github.event.pull_request.head.sha }}
+              echo ""
+              echo "</details>"
+              echo ""
+            } >> body.md
+          done
+
+      - name: Find existing benchmark comment
+        id: find
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: "## Benchmark Results"
+
+      - name: Create or update benchmark comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find.outputs.comment-id }}
+          body-path: body.md
+          edit-mode: replace
