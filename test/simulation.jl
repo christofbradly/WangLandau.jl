@@ -101,12 +101,6 @@ end
     logf = 0.1
     new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, ffc)
     @test 1 ≤ new_index ≤ length(histogram)
-
-    # nc = WangLandau.NoCatchup()
-    # sim2 = CommonSolve.init(prob; catchup_strategy = nc)
-    # @test WangLandau.catchup_enabled(nc) == false
-    # @test WangLandau.catchup_value(nc) == 0.0
-    # WangLandau.update!(nc, sim2)  
 end
 
 @testset "DynamicFractionalCatchup" begin
@@ -138,42 +132,64 @@ end
     @test any(logdos .≥ 0)
 end
 
-# @testset "DynamicFractionalCatchup" begin
-#     using Random
-#     Random.seed!(1234)
+@testset "FlatHistogramStrategy" begin
+    Random.seed!(1234)
 
-#     L = 5
-#     statedefn = Ising2D(L; periodic = false)
-#     prob = WangLandauProblem(statedefn)
+    f1 = FractionOfMean(0.8)
+    @test f1 isa FractionOfMean
+    @test f1.tol ≈ 0.8
 
-#     sim = CommonSolve.init(prob; check_sweeps = 10,final_logf = 1e-3)
+    @test_throws ArgumentError FractionOfMean(1.2)
+    @test_throws ArgumentError FractionOfMean(-0.5)
+    @test_throws ArgumentError FractionOfMean(0.5, -1)
 
-#     @test isa(sim, WangLandau.WangLandauSimulation)
-#     @test sim.check_steps == 10 * WangLandau.system_size(statedefn)
+    f2 = FractionOfMean(0.8)
+    hist = zeros(Int, 5)
+    @test_throws ErrorException isflat(f2, hist)
 
-#     state, old_index = initialise_state(statedefn)
-#     logdos = fill(1e-8, WangLandau.histogram_size(statedefn))
-#     histogram = zeros(Int, WangLandau.histogram_size(statedefn))
-#     logf = 0.1
-#     dfc = WangLandau.DynamicFractionalCatchup()
+    hist .= [0, 0, 3, 0, 0]
+    @test isflat(f2, hist) == false
 
-#     new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, dfc)
-#     @test 1 ≤ new_index ≤ length(histogram)
-#     @test any(histogram .> 0)
-#     @test any(logdos .> 0)
+    hist .= [5, 5, 5, 5, 5]
+    @test isflat(f2, hist) == true
 
-#     hist = zeros(Int, size(sim.samples))
-#     task_samples = zeros(Int, max(1, sim.tasks_per_thread * Threads.nthreads()))
-#     chunk_size = max(1, sim.check_steps ÷ length(task_samples))
+    hist .= [10, 9, 7, 6, 1]
+    @test isflat(f2, hist) == false
 
-#     flag = CommonSolve.step!(sim, hist, task_samples, chunk_size)
-#     @test isa(flag, Bool)
-#     @test sim.flat_checks ≥ 1
-#     @test sim.total_steps ≥ sim.check_steps
+    flat_strategy = FractionOfMean(0.8)
+    sim_dummy = (; flat_iterations=1, total_steps=10)
+    WangLandau.update!(flat_strategy, sim_dummy) 
 
-#     sim_short = CommonSolve.init(prob;check_sweeps = 5,final_logf = 1e-2,max_total_steps = 200)
-#     sim_done = CommonSolve.solve!(sim_short)
-#     @test isa(sim_done, WangLandau.WangLandauSimulation)
-#     @test sim_done.total_steps > 0
-#     @test sim_done.elapsed_time ≥ 0.0
-# end
+    s1 = StableNumVisits(2, 5)
+    @test s1 isa StableNumVisits
+    @test s1.min == 2
+    @test s1.checksteps == 5
+
+    s1.numvisits = 1
+    s1.stablesteps = 10
+    hist .= [0, 1, 2, 3, 4]
+    @test isflat(s1, hist) == false
+    @test s1.stablesteps == 0 
+
+    s1.numvisits = 5
+    s1.stablesteps = 10
+    s1.checksteps = 5
+    @test isflat(s1, hist) == true
+
+    sim_stub = (; flat_iterations=2, total_steps=50)
+    s1.iter = 1
+    s1.lastcheck = 0
+    s1.stablesteps = 5
+    s1.numvisits = 10
+    WangLandau.update!(s1, sim_stub)
+    @test s1.numvisits == 0
+    @test s1.stablesteps == 0
+
+    sim_stub = (; flat_iterations=2, total_steps=100)
+    s1.iter = 2
+    s1.lastcheck = 10
+    s1.stablesteps = 0
+    WangLandau.update!(s1, sim_stub)
+    @test s1.stablesteps == 50
+end
+
