@@ -87,7 +87,7 @@ end
     statedefn = Ising2D(L; periodic = false)
     prob = WangLandauProblem(statedefn)
 
-    sim = CommonSolve.init(prob;check_sweeps = 10,final_logf = 1e-3,flatness_criterion = WangLandau.FractionalFlatnessCriterion(0.8))
+    sim = CommonSolve.init(prob;check_sweeps = 10,final_logf = 1e-3, WangLandau.FixedFractionalCatchup(0.8))
 
     @test isa(sim, WangLandau.WangLandauSimulation)
     @test sim.check_steps == 10 * WangLandau.system_size(statedefn)
@@ -112,7 +112,7 @@ end
     @test sim.flat_checks ≥ 1
     @test sim.total_steps ≥ sim.check_steps
 
-    sim_short = CommonSolve.init(prob;check_sweeps = 5,final_logf = 1e-2,max_total_steps = 200,flatness_criterion = WangLandau.FractionalFlatnessCriterion(0.7))
+    sim_short = CommonSolve.init(prob;check_sweeps = 5,final_logf = 1e-2,max_total_steps = 200, WangLandau.FixedFractionalCatchup(0.7))
 
     sim_done = CommonSolve.solve!(sim_short)
     @test isa(sim_done, WangLandau.WangLandauSimulation)
