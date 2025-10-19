@@ -2,6 +2,7 @@ using WangLandau
 using Test
 using Random
 using CommonSolve
+using Logging 
 
 include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
 
