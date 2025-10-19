@@ -198,9 +198,8 @@ end
 end
 
 @testset "Logger" begin
-    try
-        __init__()
-    catch
-    end
+    Base.stderr = IOBuffer()
+    global_logger(ConsoleLogger())
+    @test typeof(Base.global_logger()) == ConsoleLogger
 end
 
