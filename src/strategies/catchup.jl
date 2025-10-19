@@ -75,7 +75,7 @@ mutable struct DynamicFractionalCatchup{B} <: CatchupStrategy{B}
     value::Float64
 end
 function DynamicFractionalCatchup()
-    return FixedFractionalCatchup{true}(0.0)
+    return DynamicFractionalCatchup{true}(0.0)
 end
 
 function catchup_value(strat::DynamicFractionalCatchup)
