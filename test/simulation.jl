@@ -143,7 +143,7 @@ end
     @test_throws ArgumentError FractionOfMean(-0.5)
     @test_throws ArgumentError FractionOfMean(0.5, -1)
 
-    f2 = WangLandau..FractionOfMean(0.8)
+    f2 = WangLandau.FractionOfMean(0.8)
     hist = zeros(Int, 5)
     @test_throws ErrorException WangLandau.isflat(f2, hist)
 
