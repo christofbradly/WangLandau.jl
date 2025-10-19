@@ -86,7 +86,7 @@ end
     statedefn = Ising2D(L; periodic=false)
     prob = WangLandauProblem(statedefn)
 
-    ffc = FixedFractionalCatchup(0.25)
+    ffc = WangLandau.FixedFractionalCatchup(0.25)
     sim1 = CommonSolve.init(prob; catchup_strategy = ffc)
     sim1.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim1.logdos), 4)]
 
@@ -103,14 +103,14 @@ end
     new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, ffc)
     @test 1 ≤ new_index ≤ length(histogram)
 
-    nc = NoCatchup()
+    nc = WangLandau.NoCatchup()
     sim2 = CommonSolve.init(prob; catchup_strategy = nc)
     @test WangLandau.catchup_enabled(nc) == false
     @test WangLandau.catchup_value(nc) == 0.0
     WangLandau.update!(nc, sim2)  # does nothing safely
 
 
-    dfc = DynamicFractionalCatchup()
+    dfc = WangLandau.DynamicFractionalCatchup()
     sim3 = CommonSolve.init(prob; catchup_strategy = dfc)
     sim3.logf_strategy = WangLandau.ReduceByFactor(; final = 1e-6)
     sim3.logdos .= 1e-8 .* (1:length(sim3.logdos))
