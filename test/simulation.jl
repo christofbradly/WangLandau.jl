@@ -171,25 +171,28 @@ end
     @test WangLandau.isflat(s1, hist) == false
     @test s1.stablesteps == 0 
 
-    s1.numvisits = 5
-    s1.stablesteps = 10
-    s1.checksteps = 5
-    @test WangLandau.isflat(s1, hist) == true
+    s2 = WangLandau.StableNumVisits(2, 5)
+    s2.numvisits = 5
+    s2.stablesteps = 10
+    hist .= [0, 1, 2, 3, 4]
+    @test WangLandau.isflat(s2, hist) == true
 
     sim_stub = (; flat_iterations=2, total_steps=50)
-    s1.iter = 1
-    s1.lastcheck = 0
-    s1.stablesteps = 5
-    s1.numvisits = 10
-    WangLandau.update!(s1, sim_stub)
-    @test s1.numvisits == 0
-    @test s1.stablesteps == 0
+    s3 = WangLandau.StableNumVisits(2, 5)
+    s3.iter = 1
+    s3.lastcheck = 0
+    s3.stablesteps = 5
+    s3.numvisits = 10
+    WangLandau.update!(s3, sim_stub)
+    @test s3.numvisits == 0
+    @test s3.stablesteps == 0
 
-    sim_stub = (; flat_iterations=2, total_steps=100)
-    s1.iter = 2
-    s1.lastcheck = 10
-    s1.stablesteps = 0
-    WangLandau.update!(s1, sim_stub)
-    @test s1.stablesteps == 50
+    sim_stub2 = (; flat_iterations=2, total_steps=100)
+    s4 = WangLandau.StableNumVisits(2, 5)
+    s4.iter = 2
+    s4.lastcheck = 10
+    s4.stablesteps = 0
+    WangLandau.update!(s4, sim_stub2)
+    @test s4.stablesteps == 90
 end
 
