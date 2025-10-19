@@ -100,7 +100,7 @@ end
     logf = 0.1
     new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, ffc)
     @test 1 ≤ new_index ≤ length(histogram)
-    nc = NoCatchup()
+    nc = WangLandau.NoCatchup()
     @test WangLandau.catchup_enabled(nc) == false
     @test WangLandau.catchup_value(nc) == 0.0
     sim.catchup_strategy = nc
