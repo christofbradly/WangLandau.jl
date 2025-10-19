@@ -93,10 +93,10 @@ end
     @test sim.check_steps == 10 * WangLandau.system_size(statedefn)
 
     state, old_index = initialise_state(statedefn)
-    logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
+    logdos = fill(1e-8, WangLandau.histogram_size(statedefn))
     histogram = zeros(Int, WangLandau.histogram_size(statedefn))
     logf = 0.1
-    ffc = WangLandau.FixedFractionalCatchup()
+    ffc = WangLandau.FixedFractionalCatchup(0.1)
 
     new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, ffc)
     @test 1 ≤ new_index ≤ length(histogram)
@@ -133,7 +133,7 @@ end
     @test sim.check_steps == 10 * WangLandau.system_size(statedefn)
 
     state, old_index = initialise_state(statedefn)
-    logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
+    logdos = fill(1e-8, WangLandau.histogram_size(statedefn))
     histogram = zeros(Int, WangLandau.histogram_size(statedefn))
     logf = 0.1
     dfc = WangLandau.DynamicFractionalCatchup()

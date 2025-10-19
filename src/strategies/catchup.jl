@@ -60,6 +60,7 @@ end
 
 function update!(strat::FixedFractionalCatchup, sim)
     strat.minval = minimum(sim.logdos[sim.logdos .> 0])
+    strat.minval = isempty(nonzeros) ? 1.0 : minimum(nonzeros)
     return strat
 end
 
@@ -73,7 +74,9 @@ is determined from the current value of `\\log f`.
 """
 mutable struct DynamicFractionalCatchup{B} <: CatchupStrategy{B}
     value::Float64
-    DynamicFractionalCatchup() = new{true}(1.0, 0.0)
+end
+function DynamicFractionalCatchup()
+    return FixedFractionalCatchup{true}(0.0)
 end
 
 function catchup_value(strat::DynamicFractionalCatchup)
@@ -81,8 +84,9 @@ function catchup_value(strat::DynamicFractionalCatchup)
 end
 
 function update!(strat::DynamicFractionalCatchup; sim)
-    minval = minimum(sim.logdos[sim.logdosdos .> 0])
+    nonzeros = sim.logdos[sim.logdos .> 0]
+    minval = isempty(nonzeros) ? 1.0 : minimum(nonzeros)
     logf = current_value(sim.logf_strategy)
-    strat.value = minval * logf
+    strat.value = minval * exp(logf)
     return strat
 end
