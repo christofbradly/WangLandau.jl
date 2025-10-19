@@ -87,7 +87,7 @@ end
     statedefn = Ising2D(L; periodic = false)
     prob = WangLandauProblem(statedefn)
 
-    sim = CommonSolve.init(prob;check_sweeps = 10,final_logf = 1e-3, WangLandau.FixedFractionalCatchup(0.8))
+    sim = CommonSolve.init(prob; check_sweeps = 10,final_logf = 1e-3)
 
     @test isa(sim, WangLandau.WangLandauSimulation)
     @test sim.check_steps == 10 * WangLandau.system_size(statedefn)
@@ -96,9 +96,9 @@ end
     logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
     histogram = zeros(Int, WangLandau.histogram_size(statedefn))
     logf = 0.1
-    catchup = WangLandau.NoCatchup()
+    ffc = WangLandau.FixedFractionalCatchup()
 
-    new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, catchup)
+    new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, ffc)
     @test 1 ≤ new_index ≤ length(histogram)
     @test any(histogram .> 0)
     @test any(logdos .> 0)
@@ -112,8 +112,47 @@ end
     @test sim.flat_checks ≥ 1
     @test sim.total_steps ≥ sim.check_steps
 
-    sim_short = CommonSolve.init(prob;check_sweeps = 5,final_logf = 1e-2,max_total_steps = 200, WangLandau.FixedFractionalCatchup(0.7))
+    sim_short = CommonSolve.init(prob;check_sweeps = 5,final_logf = 1e-2,max_total_steps = 200)
+    sim_done = CommonSolve.solve!(sim_short)
+    @test isa(sim_done, WangLandau.WangLandauSimulation)
+    @test sim_done.total_steps > 0
+    @test sim_done.elapsed_time ≥ 0.0
+end
 
+@testset "DynamicFractionalCatchup" begin
+    using Random
+    Random.seed!(1234)
+
+    L = 5
+    statedefn = Ising2D(L; periodic = false)
+    prob = WangLandauProblem(statedefn)
+
+    sim = CommonSolve.init(prob; check_sweeps = 10,final_logf = 1e-3)
+
+    @test isa(sim, WangLandau.WangLandauSimulation)
+    @test sim.check_steps == 10 * WangLandau.system_size(statedefn)
+
+    state, old_index = initialise_state(statedefn)
+    logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
+    histogram = zeros(Int, WangLandau.histogram_size(statedefn))
+    logf = 0.1
+    dfc = WangLandau.DynamicFractionalCatchup()
+
+    new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, dfc)
+    @test 1 ≤ new_index ≤ length(histogram)
+    @test any(histogram .> 0)
+    @test any(logdos .> 0)
+
+    hist = zeros(Int, size(sim.samples))
+    task_samples = zeros(Int, max(1, sim.tasks_per_thread * Threads.nthreads()))
+    chunk_size = max(1, sim.check_steps ÷ length(task_samples))
+
+    flag = CommonSolve.step!(sim, hist, task_samples, chunk_size)
+    @test isa(flag, Bool)
+    @test sim.flat_checks ≥ 1
+    @test sim.total_steps ≥ sim.check_steps
+
+    sim_short = CommonSolve.init(prob;check_sweeps = 5,final_logf = 1e-2,max_total_steps = 200)
     sim_done = CommonSolve.solve!(sim_short)
     @test isa(sim_done, WangLandau.WangLandauSimulation)
     @test sim_done.total_steps > 0
