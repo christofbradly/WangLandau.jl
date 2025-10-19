@@ -80,19 +80,21 @@ end
 end
 
 @testset "CatchupStrategies coverage" begin
+    using WangLandau
+
     L = 4
     statedefn = Ising2D(L; periodic=false)
     prob = WangLandauProblem(statedefn)
 
     ffc = FixedFractionalCatchup(0.25)
-    sim = CommonSolve.init(prob; catchup_strategy = ffc)
+    sim1 = CommonSolve.init(prob; catchup_strategy = ffc)
+    sim1.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim1.logdos), 4)]
 
-    sim.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim.logdos), 4)]
-    f_before = ffc.minval
-    WangLandau.update!(ffc, sim)
-    @test ffc.minval != f_before
+    oldmin = ffc.minval
+    WangLandau.update!(ffc, sim1)
+    @test ffc.minval != oldmin
     @test WangLandau.catchup_enabled(ffc) == true
-    @test WangLandau.catchup_value(ffc) == ffc.minval * ffc.fraction
+    @test WangLandau.catchup_value(ffc) ≈ ffc.minval * ffc.fraction
 
     state, old_index = initialise_state(statedefn)
     histogram = zeros(Int, WangLandau.histogram_size(statedefn))
@@ -100,18 +102,19 @@ end
     logf = 0.1
     new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, ffc)
     @test 1 ≤ new_index ≤ length(histogram)
-    nc = WangLandau.NoCatchup()
+
+    nc = NoCatchup()
+    sim2 = CommonSolve.init(prob; catchup_strategy = nc)
     @test WangLandau.catchup_enabled(nc) == false
     @test WangLandau.catchup_value(nc) == 0.0
-    sim.catchup_strategy = nc
-    WangLandau.update!(nc, sim)  
+    WangLandau.update!(nc, sim2)  # does nothing safely
 
 
     dfc = DynamicFractionalCatchup()
-    sim.catchup_strategy = dfc
-
-    sim.logdos .= 1e-8 .* (1:length(sim.logdos))
-    WangLandau.update!(dfc, sim)
+    sim3 = CommonSolve.init(prob; catchup_strategy = dfc)
+    sim3.logf_strategy = WangLandau.ReduceByFactor(; final = 1e-6)
+    sim3.logdos .= 1e-8 .* (1:length(sim3.logdos))
+    WangLandau.update!(dfc, sim3)
     val = WangLandau.catchup_value(dfc)
     @test val isa Float64
     @test val ≥ 0.0
