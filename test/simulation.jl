@@ -135,7 +135,7 @@ end
 @testset "FlatHistogramStrategy" begin
     Random.seed!(1234)
 
-    f1 = FractionOfMean(0.8)
+    f1 = WangLandau.FractionOfMean(0.8)
     @test f1 isa FractionOfMean
     @test f1.tol ≈ 0.8
 
@@ -143,20 +143,20 @@ end
     @test_throws ArgumentError FractionOfMean(-0.5)
     @test_throws ArgumentError FractionOfMean(0.5, -1)
 
-    f2 = FractionOfMean(0.8)
+    f2 = WangLandau..FractionOfMean(0.8)
     hist = zeros(Int, 5)
-    @test_throws ErrorException isflat(f2, hist)
+    @test_throws ErrorException WangLandau.isflat(f2, hist)
 
     hist .= [0, 0, 3, 0, 0]
-    @test isflat(f2, hist) == false
+    @test WangLandau.isflat(f2, hist) == false
 
     hist .= [5, 5, 5, 5, 5]
-    @test isflat(f2, hist) == true
+    @test WangLandau.isflat(f2, hist) == true
 
     hist .= [10, 9, 7, 6, 1]
-    @test isflat(f2, hist) == false
+    @test WangLandau.isflat(f2, hist) == false
 
-    flat_strategy = FractionOfMean(0.8)
+    flat_strategy = WangLandau.FractionOfMean(0.8)
     sim_dummy = (; flat_iterations=1, total_steps=10)
     WangLandau.update!(flat_strategy, sim_dummy) 
 
@@ -168,13 +168,13 @@ end
     s1.numvisits = 1
     s1.stablesteps = 10
     hist .= [0, 1, 2, 3, 4]
-    @test isflat(s1, hist) == false
+    @test WangLandau.isflat(s1, hist) == false
     @test s1.stablesteps == 0 
 
     s1.numvisits = 5
     s1.stablesteps = 10
     s1.checksteps = 5
-    @test isflat(s1, hist) == true
+    @test WangLandau.isflat(s1, hist) == true
 
     sim_stub = (; flat_iterations=2, total_steps=50)
     s1.iter = 1
