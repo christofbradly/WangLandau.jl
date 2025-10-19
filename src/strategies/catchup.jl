@@ -84,7 +84,6 @@ end
 
 function update!(strat::DynamicFractionalCatchup; sim)
     minval = minimum(sim.logdos[sim.logdos .> 0])
-    logf = current_value(sim.logf_strategy)
-    strat.value = minval * exp(logf)
+    strat.value = minval * exp(current_value(sim.logf_strategy))
     return strat
 end

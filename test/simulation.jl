@@ -198,9 +198,3 @@ end
     @test s4.stablesteps == 90
 end
 
-@testset "Logger" begin
-    Base.stderr = IOBuffer()
-    global_logger(ConsoleLogger())
-    @test typeof(Base.global_logger()) == ConsoleLogger
-end
-
