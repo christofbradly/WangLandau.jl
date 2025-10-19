@@ -81,16 +81,16 @@ end
 @testset "FixedFractionalCatchup" begin
     Random.seed!(12345)
 
-    L = 4
+    L = 5
     statedefn = Ising2D(L; periodic=false)
     prob = WangLandauProblem(statedefn)
 
     ffc = WangLandau.FixedFractionalCatchup(0.25)
-    sim1 = CommonSolve.init(prob; catchup_strategy = ffc)
-    sim1.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim1.logdos), 4)]
+    sim = CommonSolve.init(prob; catchup_strategy = ffc)
+    sim.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim.logdos), 4)]
 
     oldmin = ffc.minval
-    WangLandau.update!(ffc, sim1)
+    WangLandau.update!(ffc, sim)
     @test ffc.minval != oldmin
     @test WangLandau.catchup_enabled(ffc) == true
     @test WangLandau.catchup_value(ffc) ≈ ffc.minval * ffc.fraction
@@ -127,11 +127,15 @@ end
     @test val ≥ 0.0
     @test WangLandau.catchup_enabled(dfc) == true
 
-    logdos .= 0.0
-    histogram .= 0
+    logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
+    histogram = zeros(Int, WangLandau.histogram_size(statedefn))
+    state, old_index = initialise_state(statedefn)
     logf = 0.01
+
     new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, dfc)
     @test 1 ≤ new_index ≤ length(histogram)
+    @test any(histogram .> 0)
+    @test any(logdos .≥ 0)
 end
 
 # @testset "DynamicFractionalCatchup" begin
