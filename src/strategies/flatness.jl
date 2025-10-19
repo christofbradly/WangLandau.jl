@@ -86,7 +86,7 @@ function isflat(strat::StableNumVisits, hist)
         return false
     end
     # numvisits is stable, now check for duration
-    return strat.stablesteps > checksteps
+    return strat.stablesteps > strat.checksteps
 end
 
 function update!(strat::StableNumVisits, sim)
