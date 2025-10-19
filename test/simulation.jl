@@ -85,13 +85,13 @@ end
 
     L = 4
     statedefn = Ising2D(L; periodic=false)
+    logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
 
     # FixedFractionalCatchup 
     ffc = WangLandau.FixedFractionalCatchup(0.5)
     @test WangLandau.catchup_enabled(ffc)
     sim = WangLandau.WangLandauSimulation(statedefn)
 
-    sim.logdos .= [0.0, 1.0, 2.0]
     WangLandau.update!(ffc, sim)
     @test ffc.minval == 1.0
     @test WangLandau.catchup_value(ffc) == 0.5
@@ -102,7 +102,6 @@ end
     @test WangLandau.catchup_enabled(dfc)
 
     sim2 = WangLandau.WangLandauSimulation(statedefn)
-    sim2.logdos .= [0.0, 2.0, 3.0]
     WangLandau.update!(dfc, sim2)
     @test dfc.value ≥ 0.0
     @test WangLandau.catchup_value(dfc) == dfc.value
