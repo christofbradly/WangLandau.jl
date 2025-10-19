@@ -114,22 +114,26 @@ end
     sim = CommonSolve.init(prob; catchup_strategy = dfc)
     sim.logf_strategy = WangLandau.ReduceByFactor(; final = 1e-6)
     sim.logdos .= 1e-8 .* (1:length(sim.logdos))
+    old_value = dfc.value
 
     WangLandau.update!(dfc, sim)
     val = WangLandau.catchup_value(dfc)
     @test val isa Float64
     @test val ≥ 0.0
+    @test val != old_value
     @test WangLandau.catchup_enabled(dfc) == true
 
     logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
     histogram = zeros(Int, WangLandau.histogram_size(statedefn))
+    
     state, old_index = initialise_state(statedefn)
     logf = 0.01
-
     new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, dfc)
     @test 1 ≤ new_index ≤ length(histogram)
     @test any(histogram .> 0)
     @test any(logdos .≥ 0)
+    first_nonzero = findfirst(x -> x > 0, logdos)
+    @test isapprox(logdos[first_nonzero], val; atol=1e-12)
 end
 
 @testset "FlatHistogramStrategy" begin
