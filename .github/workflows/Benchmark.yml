@@ -81,7 +81,7 @@ jobs:
           threads=$(find results -maxdepth 1 -type d -name 'bench-*' | awk -F'-' '{print $NF}' | sort -n | uniq)
 
           for t in $threads; do
-            echo "<details><summary>🧵 ${t} Threads</summary>" >> body.md
+            echo "<details><summary> ${t} Threads</summary>" >> body.md
             echo "" >> body.md
             
             rm -rf .asv/results
