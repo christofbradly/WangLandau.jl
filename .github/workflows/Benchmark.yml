@@ -11,10 +11,10 @@ jobs:
   bench:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         julia-version: ["1.11"]
         threads: [1, 4]
-      fail-fast: false
 
     steps:
       - name: Checkout repository
@@ -34,7 +34,7 @@ jobs:
           rev: "${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }}"
           bench-on: ${{ github.event.pull_request.head.sha }}
           job-summary: 'true'
-          exeflags: "--threads=${{ matrix.threads }} -O3"
+          exeflags: "--threads=${{ matrix.threads }}"
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
