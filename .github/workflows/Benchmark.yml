@@ -34,8 +34,7 @@ jobs:
           rev: "${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }}"
           bench-on: ${{ github.event.pull_request.head.sha }}
           job-summary: 'true'
-        env:
-          JULIA_NUM_THREADS: ${{ matrix.threads }}  
+          exeflags: "--threads=${{ matrix.threads }} -O3"
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
