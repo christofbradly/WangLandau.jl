@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         julia-version: ["1.11"]
-        threads: [1, 2, 4, 8]
+        threads: [1, 4]
       fail-fast: false
 
     steps:
@@ -34,6 +34,8 @@ jobs:
           rev: "${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }}"
           bench-on: ${{ github.event.pull_request.head.sha }}
           job-summary: 'true'
+        env:
+          JULIA_NUM_THREADS: ${{ matrix.threads }}  
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
