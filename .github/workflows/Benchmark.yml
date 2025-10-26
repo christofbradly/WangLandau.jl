@@ -57,6 +57,7 @@ jobs:
       - name: Run benchmarks (${{ matrix.julia-version }} | ${{ matrix.threads }} threads)
         shell: bash
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           JULIA_NUM_THREADS: ${{ matrix.threads }}
         run: |
           echo "Running benchmarks for ${{ steps.pkg.outputs.package_name }} with $JULIA_NUM_THREADS threads..."
