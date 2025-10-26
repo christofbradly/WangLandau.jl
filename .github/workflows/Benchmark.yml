@@ -27,14 +27,46 @@ jobs:
           latest=$(git tag -l --sort=-v:refname | head -n1)
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
 
-      - name: Run benchmark (${{ matrix.julia-version }} | ${{ matrix.threads }} threads)
-        uses: MilesCranmer/AirspeedVelocity.jl@action-v1
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
         with:
-          julia-version: ${{ matrix.julia-version }}
-          rev: "${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }}"
-          bench-on: ${{ github.event.pull_request.head.sha }}
-          job-summary: 'true'
-          exeflags: "--threads=${{ matrix.threads }}"
+          version: ${{ matrix.julia-version }}
+
+      - name: Install and build AirspeedVelocity
+        shell: bash
+        env:
+          JULIA_NUM_THREADS: ${{ matrix.threads }}
+        run: |
+          echo "Installing AirspeedVelocity.jl for Julia ${{ matrix.julia-version }}..."
+          julia -e '
+            using Pkg
+            ENV["JULIA_PKG_PRECOMPILE_AUTO"] = 0
+            pkg"add AirspeedVelocity"
+            pkg"build AirspeedVelocity"
+          '
+
+      - name: Add ~/.julia/bin to PATH
+        run: echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
+
+      - name: Get package name
+        id: pkg
+        run: |
+          pkg=$(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml)
+          echo "package_name=$pkg" >> "$GITHUB_OUTPUT"
+
+      - name: Run benchmarks (${{ matrix.julia-version }} | ${{ matrix.threads }} threads)
+        shell: bash
+        env:
+          JULIA_NUM_THREADS: ${{ matrix.threads }}
+        run: |
+          echo "Running benchmarks for ${{ steps.pkg.outputs.package_name }} with $JULIA_NUM_THREADS threads..."
+          mkdir -p results
+          benchpkg "${{ steps.pkg.outputs.package_name }}" \
+            --url="${{ github.event.repository.ssh_url }}" \
+            --output-dir=results/ \
+            --rev="${{ steps.get_tag.outputs.latest }},${{ github.sha }}" \
+            --bench-on="${{ github.sha }}" \
+            --exeflags="--threads=${{ matrix.threads }}"
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
