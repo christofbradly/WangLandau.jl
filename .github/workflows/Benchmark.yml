@@ -120,7 +120,7 @@ jobs:
             for mode in time memory; do
               echo "#### ${mode^} benchmarks" >> body.md
               benchpkgtable $(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml) \
-                --input-dir=results/bench-1.11-${t}/results \
+                --input-dir=results/bench-1.11-${t} \
                 --mode=$mode \
                 --rev=${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }} >> body.md
               echo "" >> body.md
