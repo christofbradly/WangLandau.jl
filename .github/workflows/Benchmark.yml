@@ -57,7 +57,6 @@ jobs:
       - name: Run benchmarks (${{ matrix.julia-version }} | ${{ matrix.threads }} threads)
         shell: bash
         env:
-          # GITHUB_TOKEN: ""
           JULIA_NUM_THREADS: ${{ matrix.threads }}
         run: |
           echo "Running benchmarks for ${{ steps.pkg.outputs.package_name }} with $JULIA_NUM_THREADS threads..."
@@ -121,7 +120,7 @@ jobs:
             rm -rf .asv/results
             mkdir -p .asv/results
 
-            find results -type f -path "*-${t}/*" -name "*.json" -exec cp {} .asv/results/ \;
+            find results -type f -path "*/bench-*-${t}/results/*.json" -exec cp {} .asv/results/ \;
 
             for mode in time memory; do
               echo "#### ${mode^} benchmarks" >> body.md
