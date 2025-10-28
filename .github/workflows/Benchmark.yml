@@ -120,7 +120,7 @@ jobs:
             rm -rf .asv/results
             mkdir -p .asv/results
 
-            find results -type f -path "*/bench-*-${t}/results/*.json" -exec cp {} .asv/results/ \;
+            find results -type f -name "*.json" -exec cp {} .asv/results/ \;
 
             for mode in time memory; do
               echo "#### ${mode^} benchmarks" >> body.md
