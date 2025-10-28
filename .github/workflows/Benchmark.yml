@@ -116,26 +116,11 @@ jobs:
           for t in $threads; do
             echo "<details><summary> ${t} Threads</summary>" >> body.md
             echo "" >> body.md
-            
-            rm -rf .asv/results
-            mkdir -p .asv/results
-
-            find results -type f -name "*.json" -exec cp {} .asv/results/ \;
-
-            for f in .asv/results/results_*@*+*.json; do
-              [ -f "$f" ] || continue
-              base=$(basename "$f")
-              pkg=$(echo "$base" | cut -d'@' -f1)
-              left=$(echo "$base" | sed -E 's/.*@(.*)\+.*/\1/')
-              right=$(echo "$base" | sed -E 's/.*\+([0-9a-f]+)\.json/\1/')
-              cp "$f" ".asv/results/${pkg}@${left}.json"
-              cp "$f" ".asv/results/${pkg}@${right}.json"
-            done
 
             for mode in time memory; do
               echo "#### ${mode^} benchmarks" >> body.md
               benchpkgtable $(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml) \
-                --input-dir=.asv/results \
+                --input-dir=results/bench-1.11-${t}/results \
                 --mode=$mode \
                 --rev=${{ steps.get_tag.outputs.latest }},${{ github.event.pull_request.head.sha }} >> body.md
               echo "" >> body.md
