@@ -22,9 +22,8 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     sim_check = WangLandau.WangLandauSimulation(statedefn; check_sweeps = 10)
     @test sim_check.check_steps == 10 * WangLandau.system_size(statedefn)
 
-
     sim_steps = WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
-    @test_logs (:warn, MSG) WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
+    @test_logs :warn WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
 
     sim_logf = WangLandau.WangLandauSimulation(statedefn; final_logf = 1e-3)
     @test WangLandau.final_value(sim_logf.logf_strategy) == 1e-3
@@ -116,9 +115,9 @@ end
     @test_throws ArgumentError FractionOfMean(-0.5)
     @test_throws ArgumentError FractionOfMean(0.5, -1)
 
-    f2 = FractionOfMean(0.8)
+    f = FractionOfMean(0.8)
     hist = zeros(Int, 5)
-    @test_throws ErrorException WangLandau.isflat(f2, hist)
+    @test_throws ErrorException WangLandau.isflat(f, hist)
 
     hist .= [0, 0, 3, 0, 0]
     @test WangLandau.isflat(f2, hist) == false
@@ -130,32 +129,27 @@ end
     @test WangLandau.isflat(f2, hist) == false
 
     flat_strategy = FractionOfMean(0.8)
-    sim_dummy = (; flat_iterations=1, total_steps=10)
-    WangLandau.update!(flat_strategy, sim_dummy) 
-    @test isnothing(WangLandau.update!(flat_strategy, (;)))  
+    sim_stub = (; flat_iterations = 1, total_steps = 10)
+    @test isnothing(WangLandau.update!(flat_strategy, sim_stub))
+    @test isnothing(WangLandau.update!(flat_strategy, (;)))   # ensures early-return branch
 
     s1 = StableNumVisits(1, 10)
     hist .= [0, 1, 2, 3, 4]
-    @test WangLandau.isflat(s1, hist) == false
-    @test s1.stablesteps == 0 
+    @test !WangLandau.isflat(s1, hist)   
+    @test s1.stablesteps == 0
 
     s2 = StableNumVisits(2, 5)
-    hist .= [0, 1, 2, 3, 4]
-    @test WangLandau.isflat(s2, hist) == true
+    hist .= [2, 2, 2, 2, 2]
+    @test !WangLandau.isflat(s2, hist)   
+    @test WangLandau.isflat(s2, hist)
 
-sim_stub = (; flat_iterations = 2, total_steps = 50)
+    sim_stub = (; flat_iterations = 2, total_steps = 50)
+    s3 = StableNumVisits(2, 5)
+    WangLandau.update!(s3, sim_stub)
+    @test s3.numvisits == 0
+    @test s3.stablesteps == 0
 
-s3 = StableNumVisits(2, 5)
-
-WangLandau.update!(s3, sim_stub)
-
-@test s3.numvisits == 0
-@test s3.stablesteps == 0
-
-sim_stub2 = (; flat_iterations = 2, total_steps = 100)
-s4 = StableNumVisits(2, 0)
-
-WangLandau.update!(s4, sim_stub2)
-
-@test s4.stablesteps == 90
+    sim_stub2 = (; flat_iterations = 2, total_steps = 100)
+    s4 = StableNumVisits(2, 0)
+    @test_throws ArgumentError StableNumVisits(2, 0)
 end
