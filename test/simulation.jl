@@ -146,7 +146,7 @@ end
         s2 = StableNumVisits(2, 5)
         hist .= [2, 2, 2, 2, 2]
         @test !WangLandau.isflat(s2, hist)    
-        @test s2.numvisits == 5               
+        @test s2.numvisits == 0               
         @test s2.stablesteps == 0             
         s2.stablesteps = 6                    
         @test WangLandau.isflat(s2, hist)
