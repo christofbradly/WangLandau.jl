@@ -109,47 +109,48 @@ end
 @testset "FlatHistogramStrategy" begin
     Random.seed!(1234)
 
-    f1 = FractionOfMean(0.8)
+    @testset "FractionOfMean" begin
+        f1 = FractionOfMean(0.8)
 
-    @test_throws ArgumentError FractionOfMean(1.2)
-    @test_throws ArgumentError FractionOfMean(-0.5)
-    @test_throws ArgumentError FractionOfMean(0.5, -1)
+        @test_throws ArgumentError FractionOfMean(1.2)
+        @test_throws ArgumentError FractionOfMean(-0.5)
+        @test_throws ArgumentError FractionOfMean(0.5, -1)
 
-    f = FractionOfMean(0.8)
-    hist = zeros(Int, 5)
-    @test_throws ErrorException WangLandau.isflat(f, hist)
+        f = FractionOfMean(0.8)
+        hist = zeros(Int, 5)
+        @test_throws ErrorException WangLandau.isflat(f, hist)
 
-    hist .= [0, 0, 3, 0, 0]
-    @test WangLandau.isflat(f2, hist) == false
+        hist .= [0, 0, 3, 0, 0]
+        @test !WangLandau.isflat(f, hist)
 
-    hist .= [5, 5, 5, 5, 5]
-    @test WangLandau.isflat(f2, hist) == true
+        hist .= [5, 5, 5, 5, 5]
+        @test WangLandau.isflat(f, hist)
 
-    hist .= [10, 9, 7, 6, 1]
-    @test WangLandau.isflat(f2, hist) == false
+        hist .= [10, 9, 7, 6, 1]
+        @test !WangLandau.isflat(f, hist)
 
-    flat_strategy = FractionOfMean(0.8)
-    sim_stub = (; flat_iterations = 1, total_steps = 10)
-    @test isnothing(WangLandau.update!(flat_strategy, sim_stub))
-    @test isnothing(WangLandau.update!(flat_strategy, (;)))   # ensures early-return branch
+        flat_strategy = FractionOfMean(0.8)
+        sim_stub = (; flat_iterations = 1, total_steps = 10)
+        @test isnothing(WangLandau.update!(flat_strategy, sim_stub))
+        @test isnothing(WangLandau.update!(flat_strategy, (;)))   
+    end
 
-    s1 = StableNumVisits(1, 10)
-    hist .= [0, 1, 2, 3, 4]
-    @test !WangLandau.isflat(s1, hist)   
-    @test s1.stablesteps == 0
+    @testset "StableNumVisits" begin
+        @test_throws ArgumentError StableNumVisits(2, 0)
 
-    s2 = StableNumVisits(2, 5)
-    hist .= [2, 2, 2, 2, 2]
-    @test !WangLandau.isflat(s2, hist)   
-    @test WangLandau.isflat(s2, hist)
+        s1 = StableNumVisits(1, 10)
+        hist = [0, 1, 2, 3, 4]
+        @test !WangLandau.isflat(s1, hist)
+        @test s1.stablesteps == 0
 
-    sim_stub = (; flat_iterations = 2, total_steps = 50)
-    s3 = StableNumVisits(2, 5)
-    WangLandau.update!(s3, sim_stub)
-    @test s3.numvisits == 0
-    @test s3.stablesteps == 0
+        s2 = StableNumVisits(2, 5)
+        hist .= [2, 2, 2, 2, 2]
+        @test WangLandau.isflat(s2, hist)
 
-    sim_stub2 = (; flat_iterations = 2, total_steps = 100)
-    s4 = StableNumVisits(2, 0)
-    @test_throws ArgumentError StableNumVisits(2, 0)
+        sim_stub = (; flat_iterations = 2, total_steps = 50)
+        s3 = StableNumVisits(2, 5)
+        WangLandau.update!(s3, sim_stub)
+        @test s3.numvisits == 0
+        @test s3.stablesteps == 0
+    end
 end
