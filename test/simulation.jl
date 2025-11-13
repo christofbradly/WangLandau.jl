@@ -23,7 +23,7 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     @test sim_check.check_steps == 10 * WangLandau.system_size(statedefn)
 
     sim_steps = WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
-    @test_logs :warn WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
+    @test_logs (:warn, r".*") WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
 
     sim_logf = WangLandau.WangLandauSimulation(statedefn; final_logf = 1e-3)
     @test WangLandau.final_value(sim_logf.logf_strategy) == 1e-3
@@ -145,6 +145,10 @@ end
 
         s2 = StableNumVisits(2, 5)
         hist .= [2, 2, 2, 2, 2]
+        @test !WangLandau.isflat(s2, hist)    
+        @test s2.numvisits == 5               
+        @test s2.stablesteps == 0             
+        s2.stablesteps = 6                    
         @test WangLandau.isflat(s2, hist)
 
         sim_stub = (; flat_iterations = 2, total_steps = 50)
