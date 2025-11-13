@@ -14,22 +14,22 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     statedefn = Ising2D(L; periodic)
 
     sim = WangLandau.WangLandauSimulation(statedefn)
-    @test isa(sim, WangLandauSimulation)
+    @test isa(sim, WangLandau.WangLandauSimulation)
     @test isa(sim.logf_strategy, ReduceByFactor)
     @test isa(sim.flat_strategy, FractionOfMean)           
     @test isa(sim.catchup_strategy, NoCatchup)    
 
-    sim_steps = WangLandauSimulation(statedefn; max_total_steps = 1)
-    @test_logs (:warn, MSG) WangLandauSimulation(statedefn; max_total_steps = 1)
+    sim_steps = WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
+    @test_logs (:warn, MSG) WangLandau.WangLandauSimulation(statedefn; max_total_steps = 1)
        
-    sim_logf = WangLandauSimulation(statedefn; final_logf = 1e-3)
+    sim_logf = WangLandau.WangLandauSimulation(statedefn; final_logf = 1e-3)
     @test WangLandau.final_value(sim_logf.logf_strategy) == 1e-3
 
     fs = FractionOfMean(0.75)
-    sim_flat = WangLandauSimulation(statedefn; flat_strategy = fs)
+    sim_flat = WangLandau.WangLandauSimulation(statedefn; flat_strategy = fs)
     @test sim_flat.flat_strategy === fs
 
-    @test_throws ArgumentError WangLandauSimulation(statedefn; tasks_per_thread = -1)
+    @test_throws ArgumentError WangLandau.WangLandauSimulation(statedefn; tasks_per_thread = -1)
 
     io = IOBuffer()
     show(io, sim)
@@ -73,7 +73,7 @@ end
 
     sim_short = init(prob; check_sweeps = 5, final_logf = 1e-2, max_total_steps = 200)
     sim_done = solve!(sim_short)
-    @test isa(sim_done, WangLandauSimulation)
+    @test isa(sim_done, WangLandau.WangLandauSimulation)
     @test sim_done.total_steps > 0
     @test sim_done.elapsed_time ≥ 0.0
 end
