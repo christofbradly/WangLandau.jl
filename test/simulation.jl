@@ -82,6 +82,10 @@ end
 @testset "FixedFractionalCatchup" begin
     Random.seed!(12345)
 
+    L = 5
+    periodic = false
+    statedefn = Ising2D(L; periodic)
+
     ffc = FixedFractionalCatchup(0.25)
     sim_stub = (; logdos = fill(1e-8, 4), catchup_strategy = ffc) 
 
