@@ -82,18 +82,13 @@ end
 @testset "FixedFractionalCatchup" begin
     Random.seed!(12345)
 
-    L = 5
-    statedefn = Ising2D(L; periodic=false)
-    prob = WangLandauProblem(statedefn)
-
     ffc = FixedFractionalCatchup(0.25)
-    sim = init(prob; catchup_strategy = ffc)
+    sim_stub = (; catchup_strategy = ffc) 
 
-
-    sim.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim.logdos), 4)]
+    sim_stub.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim_stub.logdos), 4)]
 
     oldmin = ffc.minval
-    WangLandau.update!(ffc, sim)
+    WangLandau.update!(ffc, sim_stub)
     @test ffc.minval != oldmin
     @test WangLandau.catchup_enabled(ffc) == true
     @test WangLandau.catchup_value(ffc) ≈ ffc.minval * ffc.fraction
