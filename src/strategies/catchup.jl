@@ -62,28 +62,3 @@ function update!(strat::FixedFractionalCatchup, sim)
     strat.minval = minimum(sim.logdos[sim.logdos .> 0])
     return strat
 end
-
-# todo: How to implement this?
-"""
-    DynamicFractionalCatchup() <: CatchupStrategy
-
-When a new state is visited for the first time, the density of states is
-set to a fraction of the smallest current non-zero value. The fraction
-is determined from the current value of `\\log f`.
-"""
-mutable struct DynamicFractionalCatchup{B} <: CatchupStrategy{B}
-    value::Float64
-end
-function DynamicFractionalCatchup()
-    return DynamicFractionalCatchup{true}(0.0)
-end
-
-function catchup_value(strat::DynamicFractionalCatchup)
-    return strat.value
-end
-
-function update!(strat::DynamicFractionalCatchup; sim)
-    minval = minimum(sim.logdos[sim.logdos .> 0])
-    strat.value = minval * exp(current_value(sim.logf_strategy))
-    return strat
-end

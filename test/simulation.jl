@@ -83,7 +83,7 @@ end
     Random.seed!(12345)
 
     ffc = FixedFractionalCatchup(0.25)
-    sim_stub = (; catchup_strategy = ffc) 
+    sim_stub = (; logdos = fill(1e-8, 4), catchup_strategy = ffc) 
 
     sim_stub.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim_stub.logdos), 4)]
 
