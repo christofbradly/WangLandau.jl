@@ -62,10 +62,10 @@ jobs:
           echo "Running benchmarks for ${{ steps.pkg.outputs.package_name }} with $JULIA_NUM_THREADS threads..."
           mkdir -p results
           benchpkg "${{ steps.pkg.outputs.package_name }}" \
-            --url="${{ github.event.repository.clone_url }}" \
+            --path="." \
             --output-dir=results/ \
-            --rev="${{ steps.get_tag.outputs.latest }},${{ github.sha }}" \
-            --bench-on="${{ github.sha }}" \
+            --rev="${{ steps.get_tag.outputs.latest }},HEAD" \
+            --bench-on="HEAD" \
             --exeflags="--threads=${{ matrix.threads }}"
 
       - name: Upload benchmark results
