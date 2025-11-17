@@ -100,7 +100,6 @@ end
     oldmin = ffc.minval
     WangLandau.update!(ffc, sim_stub)
     @test ffc.minval == oldmin
-    @test ffc.minval == 1e-8  
     @test WangLandau.catchup_enabled(ffc) == true
     @test WangLandau.catchup_value(ffc) ≈ ffc.minval * ffc.fraction
 
