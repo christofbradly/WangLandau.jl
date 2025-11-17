@@ -107,7 +107,7 @@ end
     ffc2 = FixedFractionalCatchup(0.25)
     sim_stub2 = (; logdos = zeros(Float64, 10), catchup_strategy = ffc2)
     oldmin2 = ffc2.minval
-    @test does_not_throw(() -> WangLandau.update!(ffc2, sim_stub2))
+    @test_throws Any WangLandau.update!(ffc2, sim_stub2)
     @test !isnan(ffc2.minval)
     @test !isinf(ffc2.minval)
     @test WangLandau.catchup_value(ffc2) ≈ ffc2.fraction * ffc2.minval
