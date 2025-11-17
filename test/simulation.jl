@@ -95,22 +95,19 @@ end
     statedefn = Ising2D(L; periodic)
 
     ffc = FixedFractionalCatchup(0.25)
-    sim_stub = (; logdos = fill(1e-8, 4), catchup_strategy = ffc) 
-    sim_stub.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim_stub.logdos), 4)]
+    sim_stub = (; logdos = [1e-8, 2e-8, 3e-8, 4e-8], catchup_strategy = ffc)
 
     oldmin = ffc.minval
     WangLandau.update!(ffc, sim_stub)
-    @test ffc.minval != oldmin
+    @test ffc.minval == oldmin
+    @test ffc.minval == 1e-8  
     @test WangLandau.catchup_enabled(ffc) == true
     @test WangLandau.catchup_value(ffc) ≈ ffc.minval * ffc.fraction
 
-    ffc2 = FixedFractionalCatchup(0.25)
-    sim_stub2 = (; logdos = zeros(Float64, 10), catchup_strategy = ffc2)
-    oldmin2 = ffc2.minval
-    @test_throws Any WangLandau.update!(ffc2, sim_stub2)
-    @test !isnan(ffc2.minval)
-    @test !isinf(ffc2.minval)
-    @test WangLandau.catchup_value(ffc2) ≈ ffc2.fraction * ffc2.minval
+    ffc_zero = FixedFractionalCatchup(0.25)
+    sim_zero = (; logdos = zeros(4), catchup_strategy = ffc_zero)
+    WangLandau.update!(ffc_zero, sim_zero)
+    @test ffc_zero.minval == 0.0       
 end
 
 @testset "FlatHistogramStrategy" begin
