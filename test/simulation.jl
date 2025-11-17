@@ -14,7 +14,6 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     statedefn = Ising2D(L; periodic)
 
     sim = WangLandau.WangLandauSimulation(statedefn)
-    @test isa(sim, WangLandau.WangLandauSimulation)
     @test isa(sim.logf_strategy, ReduceByFactor)
     @test isa(sim.flat_strategy, FractionOfMean)           
     @test isa(sim.catchup_strategy, NoCatchup)    
@@ -77,6 +76,15 @@ end
     @test isa(sim_done, WangLandau.WangLandauSimulation)
     @test sim_done.total_steps > 0
     @test sim_done.elapsed_time ≥ 0.0
+
+    state2, old_index2 = initialise_state(statedefn)
+    hist2 = zeros(Int, WangLandau.histogram_size(statedefn))
+    logdos2 = zeros(Float64, WangLandau.histogram_size(statedefn))
+    logf2 = 0.1
+    ffc = FixedFractionalCatchup(0.25)
+
+    new_index2 = WangLandau.wl_trial!(state2, old_index2, statedefn, logdos2, hist2, logf2, ffc)
+    @test 1 ≤ new_index2 ≤ length(hist2)
 end
 
 @testset "FixedFractionalCatchup" begin
@@ -88,7 +96,6 @@ end
 
     ffc = FixedFractionalCatchup(0.25)
     sim_stub = (; logdos = fill(1e-8, 4), catchup_strategy = ffc) 
-
     sim_stub.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim_stub.logdos), 4)]
 
     oldmin = ffc.minval
@@ -97,12 +104,13 @@ end
     @test WangLandau.catchup_enabled(ffc) == true
     @test WangLandau.catchup_value(ffc) ≈ ffc.minval * ffc.fraction
 
-    state, old_index = initialise_state(statedefn)
-    histogram = zeros(Int, WangLandau.histogram_size(statedefn))
-    logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
-    logf = 0.1
-    new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, ffc)
-    @test 1 ≤ new_index ≤ length(histogram)
+    ffc2 = FixedFractionalCatchup(0.25)
+    sim_stub2 = (; logdos = zeros(Float64, 10), catchup_strategy = ffc2)
+    oldmin2 = ffc2.minval
+    @test does_not_throw(() -> WangLandau.update!(ffc2, sim_stub2))
+    @test !isnan(ffc2.minval)
+    @test !isinf(ffc2.minval)
+    @test WangLandau.catchup_value(ffc2) ≈ ffc2.fraction * ffc2.minval
 end
 
 @testset "FlatHistogramStrategy" begin
