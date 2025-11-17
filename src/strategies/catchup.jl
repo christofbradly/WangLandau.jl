@@ -59,6 +59,6 @@ function catchup_value(strat::FixedFractionalCatchup)
 end
 
 function update!(strat::FixedFractionalCatchup, sim)
-    strat.minval = minimum(sim.logdos[sim.logdos .> 0])
+    strat.minval = minimum(sim.logdos[sim.logdos .> 0]; init = 0.0)
     return strat
 end
