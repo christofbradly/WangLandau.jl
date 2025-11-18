@@ -88,12 +88,6 @@ end
 end
 
 @testset "FixedFractionalCatchup" begin
-    Random.seed!(12345)
-
-    L = 5
-    periodic = false
-    statedefn = Ising2D(L; periodic)
-
     ffc = FixedFractionalCatchup(0.25)
     sim_stub = (; logdos = [1e-8, 2e-8, 3e-8, 4e-8], catchup_strategy = ffc)
 
@@ -110,8 +104,6 @@ end
 end
 
 @testset "FlatHistogramStrategy" begin
-    Random.seed!(1234)
-
     @testset "FractionOfMean" begin
         f1 = FractionOfMean(0.8)
 
@@ -160,4 +152,38 @@ end
         @test s3.numvisits == 0
         @test s3.stablesteps == 0
     end
+end
+
+@testset "ReduceByFactor" begin
+    r = ReduceByFactor(initial = 1.0, factor = 0.5, final = 1e-3)
+
+    @test_throws ArgumentError ReduceByFactor(factor = 1.2)
+    @test_throws ArgumentError ReduceByFactor(initial = 1e-6, final = 1e-4)
+
+    @test current_value(r) == 1.0
+    @test final_value(r) == 1e-3
+    @test !isconverged(r)
+
+    WangLandau.update!(r)
+    @test current_value(r) == 0.5
+
+    WangLandau.update!(r)
+    @test current_value(r) == 0.25
+
+    r2 = ReduceByFactor(initial = 1.0, factor = 0.1, final = 1e-3)
+    WangLandau.update!(r2)
+    WangLandau.update!(r2)
+    WangLandau.update!(r2)
+    @test isconverged(r2)
+
+
+    r3 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.125)
+    @test expected_iterations(r3) == 3
+
+    r4 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.0625)
+    n = expected_iterations(r4)
+    for _ in 1:n
+        WangLandau.update!(r4)
+    end
+    @test current_value(r4) ≈ final_value(r4)
 end
