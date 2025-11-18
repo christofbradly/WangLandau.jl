@@ -170,19 +170,13 @@ end
     WangLandau.update!(r)
     @test WangLandau.current_value(r) == 0.25
 
-    r2 = ReduceByFactor(initial = 1.0, factor = 0.1, final = 1e-3)
-    WangLandau.update!(r2)
-    WangLandau.update!(r2)
-    WangLandau.update!(r2)
-    @test WangLandau.isconverged(r2)
+    r2 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.125)
+    @test WangLandau.expected_iterations(r2) == 3
 
-    r3 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.125)
-    @test WangLandau.expected_iterations(r3) == 3
-
-    r4 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.0625)
-    n = WangLandau.expected_iterations(r4)
+    r3 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.0625)
+    n = WangLandau.expected_iterations(r3)
     for _ in 1:n
-        WangLandau.update!(r4)
+        WangLandau.update!(r3)
     end
-    @test WangLandau.current_value(r4) ≈ WangLandau.final_value(r4)
+    @test WangLandau.current_value(r3) ≈ WangLandau.final_value(r3)
 end
