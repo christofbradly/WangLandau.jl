@@ -98,7 +98,14 @@ jobs:
 
       - name: Install AirspeedVelocity
         run: |
-          julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
+          julia -e '
+            using Pkg
+            Pkg.add("AirspeedVelocity")
+            Pkg.build("AirspeedVelocity")
+          '
+
+      - name: Add ~/.julia/bin to PATH
+        run: echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
 
       - name: Create combined benchmark comment
         id: comment
