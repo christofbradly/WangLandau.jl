@@ -32,17 +32,12 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}
 
-      - name: Install and build AirspeedVelocity
-        shell: bash
-        env:
-          JULIA_NUM_THREADS: ${{ matrix.threads }}
+      - name: Install AirspeedVelocity
         run: |
-          echo "Installing AirspeedVelocity.jl for Julia ${{ matrix.julia-version }}..."
           julia -e '
             using Pkg
-            ENV["JULIA_PKG_PRECOMPILE_AUTO"] = 0
-            pkg"add AirspeedVelocity"
-            pkg"build AirspeedVelocity"
+            Pkg.add("AirspeedVelocity")
+            Pkg.build("AirspeedVelocity")
           '
 
       - name: Add ~/.julia/bin to PATH
@@ -54,16 +49,16 @@ jobs:
           pkg=$(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml)
           echo "package_name=$pkg" >> "$GITHUB_OUTPUT"
 
-      - name: Run benchmarks (${{ matrix.julia-version }} | ${{ matrix.threads }} threads)
-        shell: bash
+      - name: Run benchmarks
         env:
           JULIA_NUM_THREADS: ${{ matrix.threads }}
         run: |
           echo "Running benchmarks for ${{ steps.pkg.outputs.package_name }} with $JULIA_NUM_THREADS threads..."
-          mkdir -p results
+          outdir="results/julia-${{ matrix.julia-version }}/threads-${{ matrix.threads }}"
+          mkdir -p "$outdir"
           benchpkg "${{ steps.pkg.outputs.package_name }}" \
             --path="." \
-            --output-dir=results/ \
+            --output-dir "$outdir" \
             --rev="${{ steps.get_tag.outputs.latest }},HEAD" \
             --bench-on="HEAD" \
             --exeflags="--threads=${{ matrix.threads }}"
@@ -71,7 +66,7 @@ jobs:
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
-          name: bench-${{ matrix.julia-version }}-${{ matrix.threads }}
+          name: results-julia-${{ matrix.julia-version }}-threads-${{ matrix.threads }}
           path: results/
 
   summarize:
@@ -91,7 +86,7 @@ jobs:
           latest=$(git tag -l --sort=-v:refname | head -n1)
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
 
-      - name: Download all benchmark artifacts
+      - name: Download benchmark artifacts
         uses: actions/download-artifact@v4
         with:
           path: results/
@@ -103,27 +98,24 @@ jobs:
 
       - name: Install AirspeedVelocity
         run: |
-          julia -e 'using Pkg; Pkg.add("AirspeedVelocity"); using AirspeedVelocity; Pkg.build("AirspeedVelocity")'
-          echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
+          julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
 
       - name: Create combined benchmark comment
         id: comment
-        shell: bash
         run: |
           echo "## Benchmark Results" > body.md
           echo "" >> body.md
 
-          threads=$(find results -maxdepth 1 -type d -name 'bench-*' | awk -F'-' '{print $NF}' | sort -n | uniq)
-
-          for t in $threads; do
-            echo "<details><summary> ${t} Threads</summary>" >> body.md
+          for tdir in results/julia-1.11/*; do
+            t=$(basename "$tdir")   # threads-1 or threads-4
+            echo "<details><summary> ${t}</summary>" >> body.md
             echo "" >> body.md
 
             for mode in time memory; do
               echo "#### ${mode^} benchmarks" >> body.md
               benchpkgtable $(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml) \
-                --input-dir=results/bench-1.11-${t} \
-                --mode=$mode \
+                --input-dir "$tdir" \
+                --mode "$mode" \
                 --rev=${{ steps.get_tag.outputs.latest }},${{ github.sha }} >> body.md
               echo "" >> body.md
             done
