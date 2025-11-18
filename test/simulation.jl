@@ -160,30 +160,29 @@ end
     @test_throws ArgumentError ReduceByFactor(factor = 1.2)
     @test_throws ArgumentError ReduceByFactor(initial = 1e-6, final = 1e-4)
 
-    @test current_value(r) == 1.0
-    @test final_value(r) == 1e-3
-    @test !isconverged(r)
+     @test WangLandau.current_value(r) == 1.0
+    @test WangLandau.final_value(r) == 1e-3
+    @test !WangLandau.isconverged(r)
 
     WangLandau.update!(r)
-    @test current_value(r) == 0.5
+    @test WangLandau.current_value(r) == 0.5
 
     WangLandau.update!(r)
-    @test current_value(r) == 0.25
+    @test WangLandau.current_value(r) == 0.25
 
     r2 = ReduceByFactor(initial = 1.0, factor = 0.1, final = 1e-3)
     WangLandau.update!(r2)
     WangLandau.update!(r2)
     WangLandau.update!(r2)
-    @test isconverged(r2)
-
+    @test WangLandau.isconverged(r2)
 
     r3 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.125)
-    @test expected_iterations(r3) == 3
+    @test WangLandau.expected_iterations(r3) == 3
 
     r4 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.0625)
-    n = expected_iterations(r4)
+    n = WangLandau.expected_iterations(r4)
     for _ in 1:n
         WangLandau.update!(r4)
     end
-    @test current_value(r4) ≈ final_value(r4)
+    @test WangLandau.current_value(r4) ≈ WangLandau.final_value(r4)
 end
