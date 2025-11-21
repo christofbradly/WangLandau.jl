@@ -1,6 +1,5 @@
 using Test
 using WangLandau
 
-@testset "WangLandauSimulation" begin
-    include("simulation.jl")
-end
+include("problem.jl")
+include("simulation.jl")

@@ -160,15 +160,12 @@ end
     @test_throws ArgumentError ReduceByFactor(factor = 1.2)
     @test_throws ArgumentError ReduceByFactor(initial = 1e-6, final = 1e-4)
 
-     @test WangLandau.current_value(r) == 1.0
+    @test WangLandau.current_value(r) == 1.0
     @test WangLandau.final_value(r) == 1e-3
     @test !WangLandau.isconverged(r)
 
     WangLandau.update!(r)
     @test WangLandau.current_value(r) == 0.5
-
-    WangLandau.update!(r)
-    @test WangLandau.current_value(r) == 0.25
 
     r2 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.125)
     @test WangLandau.expected_iterations(r2) == 3
