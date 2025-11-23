@@ -112,6 +112,14 @@ jobs:
         with:
           path: results
 
+      - name: Debug repo structure
+        run: |
+          echo "Workspace is: $GITHUB_WORKSPACE"
+          echo "==== Top-level ===="
+          ls -R .
+          echo "==== scripts/ ===="
+          ls -R scripts || echo "scripts/ does not exist"
+
       - name: Create combined benchmark comment
         run: |
           echo "## Benchmark Results" > body.md
