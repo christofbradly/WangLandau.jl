@@ -127,16 +127,17 @@ jobs:
           echo "" >> body.md
 
           for d in results/results-julia-1.11-threads-*; do
-            threads="${d##*-}"   
+            threads="${d##*-}"
             jsondir="$d/julia-1.11/threads-$threads"
 
             echo "[ Info ] Using jsondir: $jsondir"
 
-            echo "<details><summary>Julia 1.11 — $threads threads</summary>" >> body.md
+            echo "<details><summary>Threads: $threads</summary>" >> body.md
             echo "" >> body.md
 
             benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
               --input-dir="$jsondir" \
+              --rev="${{ steps.get_tag.outputs.latest }},HEAD" \
               --mode=ratio \
               --ratio >> body.md
 
