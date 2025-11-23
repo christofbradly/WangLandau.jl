@@ -121,20 +121,23 @@ jobs:
           ls -R scripts || echo "scripts/ does not exist"
 
       - name: Create combined benchmark comment
+        shell: bash
         run: |
           echo "## Benchmark Results" > body.md
+          echo "" >> body.md
 
-          for dir in results/results-julia-1.11-threads-*; do
-              echo "[ Info ] Processing $dir" | tee -a body.md
+          for dir in results/results-julia-*; do
+            echo "<details><summary>${dir}</summary>" >> body.md
+            echo "" >> body.md
 
-              julia -e "
-                  using AirspeedVelocity
-                  latest = \"${{ steps.get_tag.outputs.latest }}\"
-                  base = \"$dir/julia-1.11/threads-${dir##*-}\"
-                  head = joinpath(base, \"results_WangLandau@HEAD.json\")
-                  tag  = joinpath(base, \"results_WangLandau@\$latest.json\")
-                  println(AirspeedVelocity.compare_markdown(tag, head))
-              " >> body.md
+            benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
+              --input-dir="$dir" \
+              --mode=ratio \
+              --ratio >> body.md
+
+            echo "" >> body.md
+            echo "</details>" >> body.md
+            echo "" >> body.md
           done
 
       - name: Find existing benchmark comment
