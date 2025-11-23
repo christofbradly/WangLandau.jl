@@ -113,7 +113,7 @@ jobs:
           echo "## Benchmark Results" > body.md
           echo "" >> body.md
 
-          for tdir in results/julia-1.11/*; do
+          for tdir in results/results-julia-1.11-threads-*/results/julia-1.11/*; do
             t=$(basename "$tdir")   # threads-1 or threads-4
             echo "<details><summary> ${t}</summary>" >> body.md
             echo "" >> body.md
