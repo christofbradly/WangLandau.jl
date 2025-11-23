@@ -107,33 +107,34 @@ jobs:
       - name: Add ~/.julia/bin to PATH
         run: echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
 
-      - name: Create combined benchmark comment
-        id: comment
+      - name: Download benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: results
+
+      - name: Debug repo structure
         run: |
-          PKG=$(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml)
+          echo "Workspace is: $GITHUB_WORKSPACE"
+          echo "==== Top-level ===="
+          ls -R .
+          echo "==== scripts/ ===="
+          ls -R scripts || echo "scripts/ does not exist"
 
+      - name: Create combined benchmark comment
+        run: |
           echo "## Benchmark Results" > body.md
-          echo "" >> body.md
 
-          for tdir in results/results-julia-1.11-threads-*; do
-            THREAD_DIR=$(basename "$tdir")   # e.g. results-julia-1.11-threads-1
-            THREAD_NUM=${THREAD_DIR##*-}     # extract trailing number
-            INPUT_DIR="$tdir/julia-1.11/threads-$THREAD_NUM"
+          for dir in results/results-julia-1.11-threads-*; do
+              echo "[ Info ] Processing $dir" | tee -a body.md
 
-            echo "<details><summary>Threads: $THREAD_NUM</summary>" >> body.md
-            echo "" >> body.md
-
-            for mode in time memory; do
-              echo "### ${mode^} benchmarks" >> body.md
-              benchpkgtable "$PKG" \
-                --input-dir "$INPUT_DIR" \
-                --mode "$mode" \
-                --rev="${{ steps.get_tag.outputs.latest }},${{ github.sha }}" >> body.md
-              echo "" >> body.md
-            done
-
-            echo "</details>" >> body.md
-            echo "" >> body.md
+              julia -e "
+                  using AirspeedVelocity
+                  latest = \"${{ steps.get_tag.outputs.latest }}\"
+                  base = \"$dir/julia-1.11/threads-${dir##*-}\"
+                  head = joinpath(base, \"results_WangLandau@HEAD.json\")
+                  tag  = joinpath(base, \"results_WangLandau@\$latest.json\")
+                  println(AirspeedVelocity.compare_markdown(tag, head))
+              " >> body.md
           done
 
       - name: Find existing benchmark comment
