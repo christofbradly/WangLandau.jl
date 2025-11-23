@@ -107,28 +107,18 @@ jobs:
       - name: Add ~/.julia/bin to PATH
         run: echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
 
+      - name: Download benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: results
+
       - name: Create combined benchmark comment
-        id: comment
         run: |
           echo "## Benchmark Results" > body.md
-          echo "" >> body.md
 
-          for tdir in results/results-julia-1.11-threads-*; do
-            t=$(basename "$tdir")   # results-julia-1.11-threads-1
-            echo "<details><summary>${t}</summary>" >> body.md
-            echo "" >> body.md
-
-            for mode in time memory; do
-              echo "#### ${mode^} benchmarks" >> body.md
-              benchpkgtable $(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml) \
-                --input-dir "$tdir" \
-                --mode "$mode" \
-                --rev=${{ steps.get_tag.outputs.latest }},${{ github.sha }} >> body.md
-              echo "" >> body.md
-            done
-
-            echo "</details>" >> body.md
-            echo "" >> body.md
+          for dir in results/results-julia-1.11-threads-*; do
+              echo "[ Info ] Searching in: $dir"
+              julia --project=. scripts/flatten_results.jl "$dir/results/julia-1.11"
           done
 
       - name: Find existing benchmark comment
