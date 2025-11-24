@@ -96,6 +96,14 @@ jobs:
         with:
           version: "1.11"
 
+      - name: Install summarize script dependencies
+        run: |
+          julia -e '
+            using Pkg
+            Pkg.activate("scripts")
+            Pkg.instantiate()
+          '    
+          
       - name: Generate combined benchmark tables
         env:
           LATEST_TAG: ${{ steps.get_tag.outputs.latest }}
