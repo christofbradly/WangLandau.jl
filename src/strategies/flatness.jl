@@ -72,7 +72,8 @@ mutable struct StableNumVisits <: FlatHistogramStrategy
     stablesteps::Int
     iter::Int
     function StableNumVisits(min, checksteps)
-        0 < tol < 1 || throw(ArgumentError("Tolerance must be less than 1."))
+        min >= 0 || throw(ArgumentError("Min must be non-negative."))
+        checksteps > 0 || throw(ArgumentError("Checksteps must be positive."))
         return new(min, checksteps, 0, 0, 0, 0)
     end    
 end
@@ -85,7 +86,7 @@ function isflat(strat::StableNumVisits, hist)
         return false
     end
     # numvisits is stable, now check for duration
-    return strat.stablesteps > checksteps
+    return strat.stablesteps > strat.checksteps
 end
 
 function update!(strat::StableNumVisits, sim)
