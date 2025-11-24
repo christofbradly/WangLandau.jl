@@ -1,35 +1,47 @@
 #!/usr/bin/env julia
-using JSON, Printf
+
+using JSON
+using AirspeedVelocity
 
 root = ARGS[1]
-latest = get(ENV, "LATEST_TAG", "UNKNOWN")
+latest = get(ENV, "LATEST_TAG", "unknown")
 
 println("## Benchmark Results\n")
 
-# Look for both thread configurations
-for threads in ["1", "4"]
-    dir = joinpath(root, "results-julia-1.11-threads-$threads", "julia-1.11", "threads-$threads")
+for dir in sort(readdir(root))
+    full = joinpath(root, dir)
 
-    basefile = joinpath(dir, "results_WangLandau@$latest.json")
-    headfile = joinpath(dir, "results_WangLandau@HEAD.json")
+    # Expect directories like: results-julia-1.11-threads-1
+    startswith(dir, "results-julia") || continue
 
-    if !isfile(basefile) || !isfile(headfile)
+    # Extract thread count
+    threads = try
+        parse(Int, split(dir, "-")[end])
+    catch
+        println("⚠ Could not extract thread count from $dir — skipping.")
+        continue
+    end
+
+    # Real json path (note the nested “results” folder!)
+    jsondir = joinpath(full, "results", "julia-1.11", "threads-$threads")
+
+    if !isdir(jsondir)
         println("⚠ Missing files for threads=$threads — skipping.\n")
         continue
     end
 
-    baseline = JSON.parsefile(basefile)
-    current  = JSON.parsefile(headfile)
-
     println("<details><summary>Threads: $threads</summary>\n")
-    println("| Benchmark | $latest | HEAD | Ratio |")
-    println("|-----------|--------|------|-------|")
 
-    for key in sort(collect(keys(baseline)))
-        old = baseline[key]
-        new = current[key]
-        ratio = new / old
-        @printf("| %s | %.5g | %.5g | %.3f |\n", key, old, new, ratio)
+    try
+        table = AirspeedVelocity.benchpkgtable(
+            "",
+            input_dir=jsondir,
+            rev="$latest,HEAD",
+            mode="ratio"
+        )
+        println(table)
+    catch e
+        println("❌ Error generating table for threads=$threads: ", e)
     end
 
     println("\n</details>\n")
