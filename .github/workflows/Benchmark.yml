@@ -69,25 +69,44 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Install AirspeedVelocity
+        run: |
+          julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
+          echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: results
 
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: "1.11"
+      - name: Detect package name
+        id: pkg
+        run: |
+          echo "package_name=$(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml)" >> "$GITHUB_OUTPUT"
 
       - name: Build benchmark comment
+        id: comment
+        shell: bash
         run: |
           echo "## Benchmark Results" > body.md
-          benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
-            --input-dir=results/bench-1.11-${{ matrix.threads }} \
-            --mode=ratio \
-            --rev=${{ steps.get_tag.outputs.latest }},${{ github.sha }} \
-            >> body.md
+          echo "" >> body.md
 
-      - name: Find existing comment
+          for dir in results/results-julia-*; do
+            threads=$(echo "$dir" | sed 's/.*threads-//')
+            echo "<details><summary>${threads} Threads</summary>" >> body.md
+            echo "" >> body.md
+
+            benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
+              --input-dir="$dir" \
+              --mode=ratio \
+              --rev="${{ github.event.pull_request.base.ref }},${{ github.sha }}" \
+              >> body.md
+
+            echo "</details>" >> body.md
+            echo "" >> body.md
+          done
+
+      - name: Find existing benchmark comment
         id: find
         uses: peter-evans/find-comment@v3
         with:
@@ -95,7 +114,8 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: "## Benchmark Results"
 
-      - uses: peter-evans/create-or-update-comment@v4
+      - name: Create or update benchmark comment
+        uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find.outputs.comment-id }}
