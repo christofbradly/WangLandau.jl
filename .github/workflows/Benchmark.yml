@@ -17,28 +17,21 @@ jobs:
         threads: [1, 4]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Get latest tag
         id: get_tag
         run: |
           git fetch --tags
-          latest=$(git tag -l --sort=-v:refname | head -n1)
-          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "latest=$(git tag -l --sort=-v:refname | head -n1)" >> "$GITHUB_OUTPUT"
 
-      - name: Setup Julia
-        uses: julia-actions/setup-julia@v2
+      - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.julia-version }}
 
       - name: Install AirspeedVelocity
         run: |
-          julia -e '
-            using Pkg
-            Pkg.add("AirspeedVelocity")
-            Pkg.build("AirspeedVelocity")
-          '
+          julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
 
       - name: Add ~/.julia/bin to PATH
         run: echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
@@ -46,25 +39,22 @@ jobs:
       - name: Get package name
         id: pkg
         run: |
-          pkg=$(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml)
-          echo "package_name=$pkg" >> "$GITHUB_OUTPUT"
+          echo "package_name=$(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml)" >> "$GITHUB_OUTPUT"
 
       - name: Run benchmarks
         env:
           JULIA_NUM_THREADS: ${{ matrix.threads }}
         run: |
-          echo "Running benchmarks for ${{ steps.pkg.outputs.package_name }} with $JULIA_NUM_THREADS threads..."
           outdir="results/julia-${{ matrix.julia-version }}/threads-${{ matrix.threads }}"
           mkdir -p "$outdir"
           benchpkg "${{ steps.pkg.outputs.package_name }}" \
             --path="." \
-            --output-dir "$outdir" \
+            --output-dir="$outdir" \
             --rev="${{ steps.get_tag.outputs.latest }},HEAD" \
             --bench-on="HEAD" \
             --exeflags="--threads=${{ matrix.threads }}"
 
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: results-julia-${{ matrix.julia-version }}-threads-${{ matrix.threads }}
           path: results/
@@ -79,38 +69,26 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          git fetch --tags
-          latest=$(git tag -l --sort=-v:refname | head -n1)
-          echo "latest=$latest" >> "$GITHUB_OUTPUT"
-
-      - name: Download benchmark artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: results/
+          path: results
 
-      - name: Setup Julia
-        uses: julia-actions/setup-julia@v2
+      - uses: julia-actions/setup-julia@v2
         with:
           version: "1.11"
 
-      - name: Install summarize script dependencies
+      - name: Install summarize dependencies
         run: |
-          julia -e '
-            using Pkg
-            Pkg.activate("scripts")
-            Pkg.instantiate()
-          '    
-          
+          julia -e 'using Pkg; Pkg.activate("scripts"); Pkg.instantiate()'
+
       - name: Generate combined benchmark tables
         env:
           LATEST_TAG: ${{ steps.get_tag.outputs.latest }}
         run: |
-          julia scripts/summarize.jl results > body.md
+          julia --project=scripts scripts/summarize.jl results > body.md
 
-      - name: Find existing benchmark comment
+      - name: Find existing comment
         id: find
         uses: peter-evans/find-comment@v3
         with:
@@ -118,8 +96,7 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: "## Benchmark Results"
 
-      - name: Create or update benchmark comment
-        uses: peter-evans/create-or-update-comment@v4
+      - uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find.outputs.comment-id }}
