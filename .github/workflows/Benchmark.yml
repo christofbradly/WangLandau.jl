@@ -89,18 +89,21 @@ jobs:
           echo "" >> body.md
 
           for dir in results/julia-*/*; do
-            threads=$(basename "$dir" | sed 's/threads-//')
-            echo "<details><summary>${threads} Threads</summary>" >> body.md
-            echo "" >> body.md
+              if [[ -d "$dir" ]]; then
+                  threads=$(basename "$dir" | sed 's/threads-//')
 
-            benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
-              --input-dir="$dir" \
-              --mode=ratio \
-              --rev="${{ github.event.pull_request.base.ref }},${{ github.sha }}" \
-              >> body.md
+                  echo "<details><summary>${threads} Threads</summary>" >> body.md
+                  echo "" >> body.md
 
-            echo "</details>" >> body.md
-            echo "" >> body.md
+                  benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
+                    --input-dir="$dir" \
+                    --mode=ratio \
+                    --rev="${{ github.event.pull_request.base.ref }},${{ github.sha }}" \
+                    >> body.md
+
+                  echo "</details>" >> body.md
+                  echo "" >> body.md
+              fi
           done
 
       - name: Find existing benchmark comment
