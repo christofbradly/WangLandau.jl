@@ -78,15 +78,14 @@ jobs:
         with:
           version: "1.11"
 
-      - name: Install summarize dependencies
+      - name: Build benchmark comment
         run: |
-          julia -e 'using Pkg; Pkg.activate("scripts"); Pkg.instantiate()'
-
-      - name: Generate combined benchmark tables
-        env:
-          LATEST_TAG: ${{ steps.get_tag.outputs.latest }}
-        run: |
-          julia --project=scripts scripts/summarize.jl results > body.md
+          echo "## Benchmark Results" > body.md
+          benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
+            --input-dir=results/bench-1.11-${{ matrix.threads }} \
+            --mode=ratio \
+            --rev=${{ steps.get_tag.outputs.latest }},${{ github.sha }} \
+            >> body.md
 
       - name: Find existing comment
         id: find
