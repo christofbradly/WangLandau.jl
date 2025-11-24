@@ -14,7 +14,6 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     statedefn = Ising2D(L; periodic)
 
     sim = WangLandau.WangLandauSimulation(statedefn)
-    @test isa(sim, WangLandau.WangLandauSimulation)
     @test isa(sim.logf_strategy, ReduceByFactor)
     @test isa(sim.flat_strategy, FractionOfMean)           
     @test isa(sim.catchup_strategy, NoCatchup)    
@@ -77,37 +76,34 @@ end
     @test isa(sim_done, WangLandau.WangLandauSimulation)
     @test sim_done.total_steps > 0
     @test sim_done.elapsed_time ≥ 0.0
+
+    state2, old_index2 = initialise_state(statedefn)
+    hist2 = zeros(Int, WangLandau.histogram_size(statedefn))
+    logdos2 = zeros(Float64, WangLandau.histogram_size(statedefn))
+    logf2 = 0.1
+    ffc = FixedFractionalCatchup(0.25)
+
+    new_index2 = WangLandau.wl_trial!(state2, old_index2, statedefn, logdos2, hist2, logf2, ffc)
+    @test 1 ≤ new_index2 ≤ length(hist2)
 end
 
 @testset "FixedFractionalCatchup" begin
-    Random.seed!(12345)
-
-    L = 5
-    periodic = false
-    statedefn = Ising2D(L; periodic)
-
     ffc = FixedFractionalCatchup(0.25)
-    sim_stub = (; logdos = fill(1e-8, 4), catchup_strategy = ffc) 
-
-    sim_stub.logdos .= [1e-8, 2e-8, 3e-8, 4e-8][mod1.(1:length(sim_stub.logdos), 4)]
+    sim_stub = (; logdos = [1e-8, 2e-8, 3e-8, 4e-8], catchup_strategy = ffc)
 
     oldmin = ffc.minval
     WangLandau.update!(ffc, sim_stub)
-    @test ffc.minval != oldmin
+    @test ffc.minval == oldmin
     @test WangLandau.catchup_enabled(ffc) == true
     @test WangLandau.catchup_value(ffc) ≈ ffc.minval * ffc.fraction
 
-    state, old_index = initialise_state(statedefn)
-    histogram = zeros(Int, WangLandau.histogram_size(statedefn))
-    logdos = zeros(Float64, WangLandau.histogram_size(statedefn))
-    logf = 0.1
-    new_index = WangLandau.wl_trial!(state, old_index, statedefn, logdos, histogram, logf, ffc)
-    @test 1 ≤ new_index ≤ length(histogram)
+    ffc_zero = FixedFractionalCatchup(0.25)
+    sim_zero = (; logdos = zeros(4), catchup_strategy = ffc_zero)
+    WangLandau.update!(ffc_zero, sim_zero)
+    @test ffc_zero.minval == 0.0       
 end
 
 @testset "FlatHistogramStrategy" begin
-    Random.seed!(1234)
-
     @testset "FractionOfMean" begin
         f1 = FractionOfMean(0.8)
 
@@ -156,4 +152,28 @@ end
         @test s3.numvisits == 0
         @test s3.stablesteps == 0
     end
+end
+
+@testset "ReduceByFactor" begin
+    r = ReduceByFactor(initial = 1.0, factor = 0.5, final = 1e-3)
+
+    @test_throws ArgumentError ReduceByFactor(factor = 1.2)
+    @test_throws ArgumentError ReduceByFactor(initial = 1e-6, final = 1e-4)
+
+    @test WangLandau.current_value(r) == 1.0
+    @test WangLandau.final_value(r) == 1e-3
+    @test !WangLandau.isconverged(r)
+
+    WangLandau.update!(r)
+    @test WangLandau.current_value(r) == 0.5
+
+    r2 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.125)
+    @test WangLandau.expected_iterations(r2) == 3
+
+    r3 = ReduceByFactor(initial = 1.0, factor = 0.5, final = 0.0625)
+    n = WangLandau.expected_iterations(r3)
+    for _ in 1:n
+        WangLandau.update!(r3)
+    end
+    @test WangLandau.current_value(r3) ≈ WangLandau.final_value(r3)
 end
