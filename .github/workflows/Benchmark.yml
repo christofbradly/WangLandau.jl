@@ -138,8 +138,7 @@ jobs:
             benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
               --input-dir="$jsondir" \
               --rev="${{ steps.get_tag.outputs.latest }},HEAD" \
-              --mode=ratio \
-              --ratio >> body.md
+              --mode=ratio >> body.md
 
             echo "" >> body.md
             echo "</details>" >> body.md
