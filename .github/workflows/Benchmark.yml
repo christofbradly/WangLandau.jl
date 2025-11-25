@@ -113,7 +113,7 @@ jobs:
                   benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
                     --input-dir="$dir" \
                     --mode=ratio \
-                    --rev="${{ github.event.pull_request.base.ref }},${{ github.sha }}" \
+                    --rev="${{ github.event.pull_request.base.ref }},HEAD" \
                     >> body.md
 
                   echo "</details>" >> body.md
