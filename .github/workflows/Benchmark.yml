@@ -91,13 +91,10 @@ jobs:
           echo "## Benchmark Results" > body.md
           echo "" >> body.md
 
-          echo "=== Debug: directory tree ==="
-          find results -maxdepth 4 -type d | sort || true
-
-          echo "=== Debug: glob expansion ==="
-          for x in results/julia-*/*; do
-              echo "glob: $x"
-          done
+          echo "=== ABSOLUTE PATH TREE ==="
+          pwd
+          ls -R .
+          echo "==========================="
           
           for dir in results/julia-*/*; do
               if [[ -d "$dir" ]]; then
