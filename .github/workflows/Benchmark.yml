@@ -73,6 +73,13 @@ jobs:
           julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
           echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
 
+      - name: Fix artifact directory nesting
+        run: |
+          if [ -d "./results/results" ]; then
+            mv ./results/results/* ./results/
+            rm -rf ./results/results
+          fi
+          
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -95,7 +102,7 @@ jobs:
           pwd
           ls -R .
           echo "==========================="
-          
+
           for dir in results/julia-*/*; do
               if [[ -d "$dir" ]]; then
                   threads=$(basename "$dir" | sed 's/threads-//')
