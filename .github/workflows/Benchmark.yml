@@ -79,7 +79,7 @@ jobs:
             mv ./results/results/* ./results/
             rm -rf ./results/results
           fi
-          
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -103,7 +103,7 @@ jobs:
           ls -R .
           echo "==========================="
 
-          for dir in results/julia-*/*; do
+          for dir in ./julia-*/*; do
               if [[ -d "$dir" ]]; then
                   threads=$(basename "$dir" | sed 's/threads-//')
 
