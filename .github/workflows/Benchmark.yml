@@ -68,6 +68,12 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          echo "latest=$(git tag -l --sort=-v:refname | head -n1)" >> "$GITHUB_OUTPUT"
+          
       - name: Install AirspeedVelocity
         run: |
           julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
@@ -98,10 +104,10 @@ jobs:
           echo "## Benchmark Results" > body.md
           echo "" >> body.md
 
-          echo "=== ABSOLUTE PATH TREE ==="
-          pwd
-          ls -R .
-          echo "==========================="
+          # echo "=== ABSOLUTE PATH TREE ==="
+          # pwd
+          # ls -R .
+          # echo "==========================="
 
           for dir in ./julia-*/*; do
               if [[ -d "$dir" ]]; then
@@ -113,7 +119,7 @@ jobs:
                   benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
                     --input-dir="$dir" \
                     --mode=ratio \
-                    --rev="${{ github.event.pull_request.base.ref }},HEAD" \
+                    --rev="${{ steps.get_tag.outputs.latest }},HEAD" \
                     >> body.md
 
                   echo "</details>" >> body.md
