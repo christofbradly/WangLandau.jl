@@ -91,6 +91,14 @@ jobs:
           echo "## Benchmark Results" > body.md
           echo "" >> body.md
 
+          echo "=== Debug: directory tree ==="
+          find results -maxdepth 4 -type d | sort || true
+
+          echo "=== Debug: glob expansion ==="
+          for x in results/julia-*/*; do
+              echo "glob: $x"
+          done
+          
           for dir in results/julia-*/*; do
               if [[ -d "$dir" ]]; then
                   threads=$(basename "$dir" | sed 's/threads-//')
