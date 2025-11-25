@@ -113,7 +113,7 @@ jobs:
         run: cat body.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Find comment
-        uses: peter-evans/find-comment@v3
+        uses: peter-evans/find-comment@v4
         id: find
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -121,7 +121,7 @@ jobs:
           body-includes: "## Benchmark Results"
 
       - name: Create or update comment
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           comment-id: ${{ steps.find.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
