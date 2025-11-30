@@ -8,143 +8,34 @@ permissions:
   pull-requests: write
 
 jobs:
-  bench:
+  one-thread:
     runs-on: ubuntu-latest
+    env:
+      JULIA_NUM_THREADS: "1"
     strategy:
       fail-fast: false
       matrix:
         julia-version: ["1.11"]
-        threads: [1, 2, 4]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          git fetch --tags
-          echo "latest=$(git tag -l --sort=-v:refname | head -n1)" >> "$GITHUB_OUTPUT"
-
-      - uses: julia-actions/setup-julia@v2
+      - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:
-          version: ${{ matrix.julia-version }}
+          julia-version: ${{ matrix.julia-version }}
 
-      - name: Install AirspeedVelocity
-        run: julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
-
-      - name: Add ~/.julia/bin to PATH
-        run: echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
-
-      - name: Get package name
-        id: pkg
-        run: |
-          echo "package_name=$(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml)" >> "$GITHUB_OUTPUT"
-
-      - name: Run benchmarks
-        env:
-          JULIA_NUM_THREADS: ${{ matrix.threads }}
-        run: |
-          outdir="results/julia-${{ matrix.julia-version }}/threads-${{ matrix.threads }}"
-          mkdir -p "$outdir"
-          benchpkg "${{ steps.pkg.outputs.package_name }}" \
-            --path="." \
-            --output-dir="$outdir" \
-            --rev="${{ steps.get_tag.outputs.latest }},HEAD" \
-            --bench-on="HEAD" \
-            --exeflags="--threads=${{ matrix.threads }}"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: results-julia-${{ matrix.julia-version }}-threads-${{ matrix.threads }}
-          path: results/
-
-  summarize:
+  four-threads:
     runs-on: ubuntu-latest
-    needs: bench
+    env:
+      JULIA_NUM_THREADS: "4"
+    strategy:
+      fail-fast: false
+      matrix:
+        julia-version: ["1.11"]
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          git fetch --tags
-          echo "latest=$(git tag -l --sort=-v:refname | head -n1)" >> "$GITHUB_OUTPUT"
-          
-      - name: Install AirspeedVelocity
-        run: |
-          julia -e 'using Pkg; Pkg.add("AirspeedVelocity")'
-          echo "$HOME/.julia/bin" >> "$GITHUB_PATH"
-
-      - name: Fix artifact directory nesting
-        run: |
-          if [ -d "./results/results" ]; then
-            mv ./results/results/* ./results/
-            rm -rf ./results/results
-          fi
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: .
-          merge-multiple: true
-
-      - name: Detect package name
-        id: pkg
-        run: |
-          echo "package_name=$(awk -F' *= *' '/^name *=/ {gsub(/"/,"",$2); print $2; exit}' Project.toml)" >> "$GITHUB_OUTPUT"
-
-      - name: Build benchmark comment
-        id: comment
-        shell: bash
-        run: |
-          echo "## Benchmark Results" > body.md
-          echo "" >> body.md
-
-          # echo "=== ABSOLUTE PATH TREE ==="
-          # pwd
-          # ls -R .
-          # echo "==========================="
-
-          for dir in ./julia-*/*; do
-              if [[ -d "$dir" ]]; then
-                  threads=$(basename "$dir" | sed 's/threads-//')
-
-                  echo "<details><summary>${threads} Threads</summary>" >> body.md
-                  echo "" >> body.md
-
-                  benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
-                    --input-dir="$dir" \
-                    --mode=ratio \
-                    --rev="${{ steps.get_tag.outputs.latest }},HEAD" \
-                    >> body.md
-
-                  echo "</details>" >> body.md
-                  echo "" >> body.md
-              fi
-          done
-
-      - name: Write to job summary
-        shell: bash
-        env:
-          GITHUB_TOKEN: ""
-        run: cat body.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Find comment
-        uses: peter-evans/find-comment@v4
-        id: find
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: "## Benchmark Results"
-
-      - name: Create or update comment
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          comment-id: ${{ steps.find.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: body.md
-          edit-mode: replace
+          julia-version: ${{ matrix.julia-version }}
