@@ -2,13 +2,12 @@ name: Benchmarks (4 threads)
 
 on:
   pull_request:
-    branches: [main]
 
 permissions:
   pull-requests: write
 
 jobs:
-  four-threads:
+  bench:
     runs-on: ubuntu-latest
     env:
       JULIA_NUM_THREADS: "4"
