@@ -58,9 +58,11 @@ jobs:
           echo "## Benchmark Results - Threads = 4" > body.md
           echo "" >> body.md
           echo "<details><summary>Time</summary>" >> body.md
+          echo ""
           benchpkgtable "${{ steps.pkg.outputs.package_name }}" \
             --input-dir=results/ --mode=time --ratio \
             --rev="${{ github.event.repository.default_branch }},${{ github.event.pull_request.head.sha }}" >> body.md
+          echo ""
           echo "</details>" >> body.md
 
       - name: Find comment
