@@ -55,7 +55,7 @@ jobs:
       - name: Create comment body
         shell: bash
         run: |
-          echo "## Benchmark Results - Threads = 1" > body.md
+          echo "## Benchmark Results - Threads = 4" > body.md
           echo "" >> body.md
           {
             echo "<details><summary>${m^} benchmarks</summary>"
