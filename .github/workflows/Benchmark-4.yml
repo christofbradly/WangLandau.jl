@@ -11,10 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       JULIA_NUM_THREADS: "4"
-
     steps:
       - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.11"
       - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:
-          julia-version: "1.11"
+          julia-version: "1.11-thread4"
           script: benchmark/benchmarks.jl
