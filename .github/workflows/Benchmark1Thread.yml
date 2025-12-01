@@ -48,7 +48,7 @@ jobs:
           benchpkg "${{ steps.pkg.outputs.package_name }}" \
             --url="${{ github.event.repository.clone_url }}" \
             --output-dir=results/ \
-            --script=benchmarks/benchmarks.jl \
+            --script=benchmark/benchmarks.jl \
             --rev="${{ github.event.repository.default_branch }},${{ github.event.pull_request.head.sha }}" \
             --bench-on="${{ github.event.repository.default_branch }}"
 
