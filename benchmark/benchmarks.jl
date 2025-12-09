@@ -24,10 +24,6 @@ const SUITE = @benchmarkset "WangLandau" begin
         @case "L=16" begin
             make_sim(16; check_sweeps=100, final_logf=1e-3)
         end seconds = 60
-
-        @case "L=24" begin
-            make_sim(24; check_sweeps=100, final_logf=1e-3)
-        end seconds = 60
     end
 
 end
