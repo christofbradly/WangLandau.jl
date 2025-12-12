@@ -18,11 +18,15 @@ const SUITE = @benchmarkset "WangLandau" begin
 
     @benchmarkset "Scaling" begin
         @case "L=8" begin
-            make_sim(8; check_sweeps=100, final_logf=1e-3)
+            make_sim(8; check_sweeps=500, final_logf=1e-3)
         end seconds = 60
 
         @case "L=16" begin
-            make_sim(16; check_sweeps=100, final_logf=1e-3)
+            make_sim(16; check_sweeps=500, final_logf=1e-3)
+        end seconds = 60
+
+        @case "L=32" begin
+            make_sim(32; check_sweeps=500, final_logf=1e-3)
         end seconds = 60
     end
 
