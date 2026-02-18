@@ -56,7 +56,7 @@ function ising_energy_periodic(grid)
 end
 
 # actual energy change is twice local energy
-function local_energy_free(grid, site)
+function local_energy_free(grid::Matrix{Int}, site::CartesianIndex{2})
     L = size(grid)[1]
     i, j = Tuple(site)
     ΔE = 0
@@ -67,7 +67,7 @@ function local_energy_free(grid, site)
     return ΔE * grid[site]
 end
 
-function local_energy_periodic(grid, site)
+function local_energy_periodic(grid::Matrix{Int}, site::CartesianIndex{2})
     L = size(grid)[1]
     i, j = Tuple(site)
     ΔE = 0
