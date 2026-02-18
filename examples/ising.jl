@@ -103,7 +103,7 @@ end
 function WangLandau.random_trial!(_, statedefn::Ising2D)
     L = statedefn.L
     site = rand(CartesianIndices((L, L)))
-    return site
+    return site, 1.0
 end
 
 function WangLandau.histogram_index(spins, statedefn::Ising2D{Periodic}, site, old_index) where {Periodic}

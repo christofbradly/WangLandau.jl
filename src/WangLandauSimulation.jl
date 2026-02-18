@@ -113,7 +113,7 @@ reject. Then increment the density of states `logdos` and histogram
 """
 function wl_trial!(state, old_index, statedefn, logdos, histogram, logf, catchup_strategy::CatchupStrategy{C}) where {C}
 
-    trial = random_trial!(state, statedefn)
+    trial, balance_factor = random_trial!(state, statedefn)
     new_index = histogram_index(state, statedefn, trial, old_index)
     
     old_dos = Atomix.@atomic logdos[old_index]
@@ -121,7 +121,7 @@ function wl_trial!(state, old_index, statedefn, logdos, histogram, logf, catchup
 
     if isnothing(trial)     # no trial move found
         new_index = old_index
-    elseif rand() < exp(old_dos - new_dos)  # faster than log(rand())
+    elseif rand() < exp(old_dos - new_dos) * balance_factor  # faster than log(rand())
         commit_trial!(state, statedefn, trial, old_index, new_index)
     else
         new_index = old_index
