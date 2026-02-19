@@ -107,6 +107,7 @@ function WangLandau.random_trial!(_, statedefn::Ising2D)
 end
 
 function WangLandau.histogram_index(spins, statedefn::Ising2D{Periodic}, site, old_index) where {Periodic}
+    println("inside ising.jl/histogram_index: ", site)
     if Periodic
         ΔE = local_energy_periodic(spins, site) ÷ 2
     else
