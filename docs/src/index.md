@@ -63,12 +63,14 @@ Then the following methods should be defined
 - [`histogram_size`](@ref): the dimensions of the histogram.
 - [`system_size`](@ref): the size of the system.
 - [`initialise_state`](@ref): Optional initialisation step.
-- [`random_trial!`](@ref): Obtain a trial move for a new state.
 - [`histogram_index`](@ref): Obtain the histogram index for the new state
+- [`random_trial!`](@ref): Obtain a trial move for a new state.
 - [`commit_trial!`](@ref): Upon acceptance of the trial move, update the
   state, optionally according to the indices.
 - [`revert_trial!`](@ref): Upon rejection of the trial move, update the
   state, optionally according to the indices. By default returns `state`
+
+The behaviour of the three functions `random_trial!`, `commit_trial!` and `revert_trial!` depends on the use case. There are two intended ways to implement these functions: The default is that `random_trial!` does not alter the state when picking a trial move, and the state is only changed by `commit_trial!` if the trial move is accepted and `revert_trial!` leaves the state unchanged. Alternatively, it may be necessary for the state to be altered when a trial move is determined in order to calculate the `histogram_index` of the proposed next state. In this case `revert_trial!` should alter the state back to the old state, and `commit_trial!` effectively does nothing.
 
 ## References
 - Original paper: [Wang & Landau, *PRL* 2001](https://link.aps.org/doi/10.1103/PhysRevLett.86.2050)

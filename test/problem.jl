@@ -26,8 +26,9 @@ include(joinpath(@__DIR__, "..", "examples", "ising.jl"))
     ]
     @test index == 23
 
-    trial = random_trial!(state, prob.statedefn)
+    trial, bf = random_trial!(state, prob.statedefn)
     @test trial == CartesianIndex(4, 1)
+    @test bf == 1.0
 
     new_index = histogram_index(state, statedefn, trial, index)
     @test new_index == 26

@@ -34,11 +34,16 @@ Used to determine the size of a Monte Carlo sweep.
 function system_size end
 
 """
-    random_trial!(state::S, statedefn::D) -> trial::T
+    random_trial!(state::S, statedefn::D) -> trial::T, balance_factor::Real
 
 Calculate a random `trial` move for `state` based on `statedefn`.
 
 If a trial move cannot be found returns `nothing`.
+
+Also returns a `balance_factor` for altering the acceptance probability;
+a good choice is the ratio of the number of possible moves from the old
+state to number of possible moves from the new state, which is typically
+needed in order to maintain detailed balance.
 
 See also [`commit_trial!`](@ref), [`revert_trial!`](@ref).
 """
@@ -54,6 +59,7 @@ See also [`random_trial!`](@ref).
 """
 function histogram_index end
 
+# maybe the default should be that `commit_trial!` does nothing and `revert_trial!` does the work?
 """
     commit_trial!(state::S, statedefn::D, trial::T, old_index::I, new_index::I)
 
