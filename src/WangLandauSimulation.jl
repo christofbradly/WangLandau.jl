@@ -114,7 +114,6 @@ reject. Then increment the density of states `logdos` and histogram
 function wl_trial!(state, old_index, statedefn, logdos, histogram, logf, catchup_strategy::CatchupStrategy{C}) where {C}
 
     trial, balance_factor = random_trial!(state, statedefn)
-    println("after random_trial!: ", trial, ", ", balance_factor)
     new_index = histogram_index(state, statedefn, trial, old_index)
     
     old_dos = Atomix.@atomic logdos[old_index]
