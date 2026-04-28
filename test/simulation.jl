@@ -47,6 +47,7 @@ end
     Random.seed!(1234)
 
     L = 5
+    # NB: Ising2D example uses Int to index histogram
     statedefn = Ising2D(L; periodic = false)
     prob = WangLandauProblem(statedefn)
 

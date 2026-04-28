@@ -114,14 +114,14 @@ reject. Then increment the density of states `logdos` and histogram
 function wl_trial!(state, old_index, statedefn, logdos, histogram, logf, catchup_strategy::CatchupStrategy{C}) where {C}
 
     trial, balance_factor = random_trial!(state, statedefn)
+    isnothing(trial) && return nothing  # no trial move found - trigger end of current iteration
+
     new_index = histogram_index(state, statedefn, trial, old_index)
     
     old_dos = Atomix.@atomic logdos[old_index]
     new_dos = Atomix.@atomic logdos[new_index]
 
-    if isnothing(trial)     # no trial move found
-        new_index = old_index
-    elseif rand() < exp(old_dos - new_dos) * balance_factor  # faster than log(rand())
+    if rand() < exp(old_dos - new_dos) * balance_factor  # faster than log(rand())
         commit_trial!(state, statedefn, trial, old_index, new_index)
     else
         new_index = old_index
@@ -149,11 +149,12 @@ function CommonSolve.step!(sim::WangLandauSimulation, histogram, task_samples, c
     logf = current_value(logf_strategy)
 
     chunks = Base.Iterators.partition(1:sim.check_steps, chunk_size)
-    tasks = map(enumerate(chunks)) do (i, chunk)
+    tasks = map(chunks) do chunk
         Threads.@spawn begin
             state, index = initialise_state($statedefn)
-            for _ in $chunk
+            for j in eachindex($chunk)
                 index = wl_trial!(state, index, $statedefn, logdos, histogram, $logf, $catchup_strategy)
+                isnothing(index) && return j
             end
             return length($chunk)
         end
